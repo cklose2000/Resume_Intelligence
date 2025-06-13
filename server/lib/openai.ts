@@ -37,7 +37,7 @@ export interface JobAnalysisResult {
 export async function analyzeJobDescription(jobDescription: string): Promise<JobAnalysisResult> {
   try {
     const response = await openai.chat.completions.create({
-      model: "o3-mini",
+      model: "o3",
       messages: [
         {
           role: "system",
@@ -100,7 +100,7 @@ export async function analyzeResumeAlignment(
 ): Promise<{ scores: ResumeScores; recommendations: OptimizationRecommendation[] }> {
   try {
     const response = await openai.chat.completions.create({
-      model: "o3-mini",
+      model: "o3",
       messages: [
         {
           role: "system",
@@ -164,7 +164,7 @@ export async function generateOptimizedContent(
     }
 
     const response = await openai.chat.completions.create({
-      model: "o3-mini",
+      model: "o3",
       messages: [
         {
           role: "system",
