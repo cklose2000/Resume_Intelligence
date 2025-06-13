@@ -1,0 +1,39 @@
+Based on my research of Replit's capabilities, here's a concise prompt for Replit Agent to build a comprehensive resume optimization app:
+
+Build an AI-Powered Resume Optimization Platform with Document Generation
+Create a full-stack web application that helps job seekers optimize their resumes using AI analysis and generates professional documents. The app should include:
+Core Features:
+
+Job Analysis Engine: Users paste job descriptions, and the system extracts key requirements, skills, and qualifications using AI
+Resume Upload & Analysis: Upload resume files (.txt, .docx, .pdf) and analyze alignment with job requirements
+AI Optimization Recommendations: Use OpenAI API to generate specific, actionable suggestions for improving resume alignment
+Document Generation: Convert optimized content into professional .docx and PDF formats with proper formatting
+Progress Tracking: Show before/after alignment scores and track improvements
+
+Technical Requirements:
+
+Frontend: Clean, responsive interface with drag-and-drop file uploads and real-time progress indicators
+Backend: Flask/FastAPI with secure file handling and API integrations
+Database: Store user sessions, job analyses, and optimization history
+AI Integration: OpenAI API for intelligent resume analysis and optimization suggestions
+Document Processing: Python libraries for reading various file formats and generating professional .docx/.pdf outputs
+Authentication: Simple user accounts to save work and track progress
+
+User Workflow:
+
+User uploads resume and pastes job description
+System analyzes job requirements and current resume alignment
+AI generates specific modification recommendations with rationale
+User reviews and applies suggested changes through an interactive editor
+System generates professional documents in multiple formats for download
+Progress tracking shows improvement metrics and optimization history
+
+Key Features:
+
+Smart keyword matching and gap analysis
+Professional document templates with proper formatting
+Batch processing for multiple job applications
+Export options (Word, PDF, plain text)
+Mobile-responsive design for editing on any device
+
+Make the interface intuitive for both tech-savvy users and those less familiar with resume optimization. Include helpful tooltips and examples throughout the user journey.
