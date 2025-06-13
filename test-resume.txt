@@ -1,0 +1,26 @@
+John Smith
+Software Developer
+Email: john.smith@email.com
+Phone: (555) 123-4567
+
+EXPERIENCE
+Software Developer at TechCorp (2020-2024)
+- Developed web applications using JavaScript and Python
+- Worked with React for front-end development
+- Collaborated with team members on various projects
+- Implemented database solutions using MySQL
+
+Junior Developer at StartupXYZ (2019-2020)
+- Built mobile applications using React Native
+- Participated in code reviews and team meetings
+- Worked on bug fixes and feature enhancements
+
+EDUCATION
+Bachelor of Science in Information Technology
+State University (2015-2019)
+
+SKILLS
+- Programming Languages: JavaScript, Python, HTML, CSS
+- Frameworks: React, Express.js
+- Databases: MySQL, MongoDB
+- Tools: Git, VS Code, Postman
