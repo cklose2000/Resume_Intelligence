@@ -187,15 +187,26 @@ export async function generateOptimizedContent(
           - Maintain the candidate's genuine experience and achievements
           - Format as clean, readable text suitable for any system
           
-          EXAMPLE OF CORRECT FORMAT:
+          FORMATTING EXAMPLES - FOLLOW EXACTLY:
+          
           CHANDLER KLOSE
           Northampton, MA 413-588-2411
-          cklose@gmail.com
+          cklose@gmail.com linkedin.com/in/chandler-klose
           
           PROFESSIONAL EXPERIENCE
           
-          Staff Data Engineer at Fortune 500 Company
-          Led development of cloud-native data platforms...`
+          Staff Data Engineer - AI/ML & Data Foundations
+          Fortune 500 Company (2019 - Present)
+          
+          Led development of cloud-native data platforms that power machine learning products and analytics. Deep expertise in Snowflake on AWS, Python, SQL, and Apache Airflow orchestration with a proven record of converting complex business logic into performant, production-grade data pipelines.
+          
+          CORE COMPETENCIES
+          
+          Data Platform Architecture (Snowflake, Redshift, BigQuery, Databricks)
+          Scalable ELT/ETL Pipelines (Airflow, dbt, Spark, Kafka)
+          ML/AI Systems Design & MLOps (Feature Stores, Vertex AI, SageMaker)
+          
+          NOTICE: Use proper spacing, complete sentences, and clear paragraph breaks.`
         },
         {
           role: "user",
@@ -206,7 +217,7 @@ export async function generateOptimizedContent(
 
     let optimizedContent = response.choices[0].message.content || originalContent;
     
-    // Post-process to remove any remaining markdown artifacts
+    // Post-process to clean up formatting issues
     optimizedContent = optimizedContent
       .replace(/\|/g, '')                     // Remove ALL pipe characters
       .replace(/-{2,}/g, '')                  // Remove multiple hyphens/table separators
@@ -222,6 +233,15 @@ export async function generateOptimizedContent(
       .replace(/\s*-\s*\|\s*/g, ' ')          // Remove dash-pipe combinations
       .replace(/\s*\|\s*-\s*/g, ' ')          // Remove pipe-dash combinations
       .replace(/(\w)\s*\|\s*(\w)/g, '$1 $2')  // Replace pipes between words with spaces
+      .replace(/\s*-\s*([A-Z])/g, ' $1')      // Fix spacing around hyphens before capitals
+      .replace(/([a-z])\s*-\s*([a-z])/g, '$1-$2') // Keep proper hyphenated words
+      .replace(/\(\s*([^)]+)\s*\)/g, ' ($1)') // Fix parentheses spacing
+      .replace(/([a-z])\s*\(\s*([^)]+)\s*\)\s*([a-z])/gi, '$1 ($2) $3') // Better parentheses formatting
+      .replace(/([.!?])\s*([A-Z])/g, '$1 $2') // Ensure space after sentence endings
+      .replace(/\s*,\s*/g, ', ')              // Fix comma spacing
+      .replace(/\s*\.\s*/g, '. ')             // Fix period spacing
+      .replace(/\s*:\s*/g, ': ')              // Fix colon spacing
+      .replace(/\s*;\s*/g, '; ')              // Fix semicolon spacing
       .replace(/\s{2,}/g, ' ')                // Normalize multiple spaces to single space
       .replace(/\n\s*\n\s*\n/g, '\n\n')       // Normalize line breaks
       .replace(/^\s+|\s+$/gm, '')             // Trim each line
