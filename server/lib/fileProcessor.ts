@@ -31,17 +31,23 @@ export async function processFile(filePath: string, originalName: string): Promi
 async function processTxtFile(filePath: string, originalName: string): Promise<ProcessedFile> {
   const rawContent = await fs.readFile(filePath, 'utf-8');
   
-  // Clean up common formatting issues
+  // Clean up and restructure content for better readability
   const content = rawContent
     .replace(/\r\n/g, '\n')                    // Normalize line endings
     .replace(/\r/g, '\n')                      // Convert remaining carriage returns
-    .replace(/\n{3,}/g, '\n\n')                // Normalize excessive line breaks
     .replace(/[ \t]+/g, ' ')                   // Normalize spaces and tabs
     .replace(/^\s+|\s+$/gm, '')                // Trim each line
+    
+    // Add proper spacing around resume sections
+    .replace(/(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|CONTACT)/gi, '\n\n$1\n\n')
+    .replace(/(\d{4}\s*[-–—]\s*\d{4}|\d{4}\s*[-–—]\s*Present)/gi, '\n\n$1\n')  // Date ranges
+    
+    // Clean up excessive line breaks and rebuild structure
     .split('\n')
     .map(line => line.trim())
     .filter(line => line.length > 0)
     .join('\n')
+    .replace(/\n{3,}/g, '\n\n')                // Normalize excessive line breaks
     .trim();
   
   return {
@@ -83,13 +89,19 @@ async function processDocxFile(filePath: string, originalName: string): Promise<
       .replace(/&gt;/g, '>') // Replace HTML entities
       .replace(/&quot;/g, '"') // Replace HTML entities
       .replace(/&#39;/g, "'") // Replace HTML entities
-      .replace(/\n{3,}/g, '\n\n') // Normalize excessive line breaks
       .replace(/[ \t]+/g, ' ') // Normalize spaces and tabs
       .replace(/^\s+|\s+$/gm, '') // Trim each line
+      
+      // Add proper spacing around resume sections
+      .replace(/(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|CONTACT)/gi, '\n\n$1\n\n')
+      .replace(/(\d{4}\s*[-–—]\s*\d{4}|\d{4}\s*[-–—]\s*Present)/gi, '\n\n$1\n')  // Date ranges
+      
+      // Clean up excessive line breaks and rebuild structure
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0)
       .join('\n')
+      .replace(/\n{3,}/g, '\n\n') // Normalize excessive line breaks
       .trim();
     
     if (!content) {

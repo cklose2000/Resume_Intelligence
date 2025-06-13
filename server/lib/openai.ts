@@ -232,10 +232,11 @@ Return the complete optimized resume with proper formatting now.`
 
     let optimizedContent = response.choices[0].message.content || originalContent;
     
-    // Comprehensive post-processing to fix all formatting issues
+    // Comprehensive text cleaning and restructuring
     optimizedContent = optimizedContent
+      // Remove all markdown and formatting artifacts
       .replace(/\|/g, '')                     // Remove ALL pipe characters
-      .replace(/-{2,}/g, '')                  // Remove multiple hyphens/table separators
+      .replace(/-{2,}/g, '')                  // Remove table separators
       .replace(/\*\*(.*?)\*\*/g, '$1')        // Remove bold markdown
       .replace(/\*(.*?)\*/g, '$1')            // Remove italic markdown
       .replace(/_{2,}(.*?)_{2,}/g, '$1')      // Remove underline markdown
@@ -244,46 +245,34 @@ Return the complete optimized resume with proper formatting now.`
       .replace(/`([^`]+)`/g, '$1')            // Remove inline code
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links
       .replace(/^\s*[-*+]\s+/gm, '• ')        // Normalize bullet points
-      .replace(/\s*\|\s*/g, ' ')              // Remove any remaining pipes with spaces
-      .replace(/\s*-\s*\|\s*/g, ' ')          // Remove dash-pipe combinations
-      .replace(/\s*\|\s*-\s*/g, ' ')          // Remove pipe-dash combinations
-      .replace(/(\w)\s*\|\s*(\w)/g, '$1 $2')  // Replace pipes between words with spaces
       
-      // Fix awkward spacing and word breaks
-      .replace(/\s+([a-z])\s+/g, ' $1 ')      // Fix isolated single letters
-      .replace(/(\w)\s+\n\s*(\w)/g, '$1 $2')  // Join broken words across lines
-      .replace(/([a-z])\s+([a-z])\s+([a-z])\s+([a-z])/g, '$1 $2 $3 $4') // Fix excessive spacing
-      .replace(/\b(\w)\s+(\w)\b(?!\s+[A-Z])/g, '$1$2') // Fix broken compound words
-      .replace(/([a-z])\s+([a-z])\s*\n/g, '$1$2\n') // Fix word breaks at line ends
+      // Split into sentences and rebuild with proper structure
+      .split(/(?<=[.!?])\s+/)
+      .map(sentence => sentence.trim())
+      .filter(sentence => sentence.length > 0)
+      .map(sentence => {
+        // Clean each sentence individually
+        return sentence
+          .replace(/\s+/g, ' ')              // Normalize all spacing
+          .replace(/\s*([,.;:!?])/g, '$1')   // Fix punctuation spacing
+          .replace(/([,.;:!?])\s*/g, '$1 ')  // Add space after punctuation
+          .replace(/\(\s+/g, '(')            // Fix opening parentheses
+          .replace(/\s+\)/g, ')')            // Fix closing parentheses
+          .trim();
+      })
+      .join(' ')
       
-      // Fix parentheses and punctuation
-      .replace(/\(\s*([^)]+)\s*\)/g, ' ($1)') // Fix parentheses spacing
-      .replace(/([a-z])\s*\(\s*([^)]+)\s*\)\s*([a-z])/gi, '$1 ($2) $3') // Better parentheses formatting
-      .replace(/([.!?])\s*([A-Z])/g, '$1 $2') // Ensure space after sentence endings
-      .replace(/\s*,\s*/g, ', ')              // Fix comma spacing
-      .replace(/\s*\.\s*/g, '. ')             // Fix period spacing
-      .replace(/\s*:\s*/g, ': ')              // Fix colon spacing
-      .replace(/\s*;\s*/g, '; ')              // Fix semicolon spacing
-      
-      // Fix hyphenation and compound words
-      .replace(/\s*-\s*([A-Z])/g, ' $1')      // Fix spacing around hyphens before capitals
-      .replace(/([a-z])\s*-\s*([a-z])/g, '$1-$2') // Keep proper hyphenated words
-      .replace(/cloud\s+native/gi, 'cloud-native') // Fix specific compound terms
-      .replace(/real\s+time/gi, 'real-time')   // Fix real-time
-      .replace(/data\s+driven/gi, 'data-driven') // Fix data-driven
-      
-      // Clean up excessive spacing and line breaks
-      .replace(/\s{3,}/g, ' ')                // Normalize excessive spaces
-      .replace(/\n\s*\n\s*\n/g, '\n\n')       // Normalize line breaks
-      .replace(/^\s+|\s+$/gm, '')             // Trim each line
-      .replace(/\s+$/gm, '')                  // Remove trailing spaces
+      // Now restructure into proper paragraphs
+      .replace(/([A-Z][A-Z\s&-]{4,})/g, '\n\n$1\n\n')  // Section headers
+      .replace(/(\d{4}[\s-]*\d{4}|\d{4}\s*-\s*Present)/g, '\n\n$1\n')  // Date ranges
+      .replace(/(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/gi, '\n\n$1\n\n')
       
       // Final cleanup
+      .replace(/\n{3,}/g, '\n\n')            // Normalize line breaks
+      .replace(/^\s+|\s+$/gm, '')            // Trim lines
       .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0)
+      .filter(line => line.trim().length > 0)
       .join('\n')
-      .replace(/\n{3,}/g, '\n\n')             // Ensure max 2 consecutive line breaks
       .trim();
 
     return optimizedContent;
