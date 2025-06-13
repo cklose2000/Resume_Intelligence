@@ -28,27 +28,35 @@ export interface OptimizationRecommendation {
   applied: boolean;
 }
 
-export async function analyzeJobDescription(jobTitle: string, jobDescription: string): Promise<JobRequirements> {
+export interface JobAnalysisResult {
+  jobTitle: string;
+  company: string;
+  requirements: JobRequirements;
+}
+
+export async function analyzeJobDescription(jobDescription: string): Promise<JobAnalysisResult> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: `You are an expert job requirements analyzer. Extract key requirements from job descriptions and return them in JSON format.
+          content: `You are an expert job requirements analyzer. Extract key information from job descriptions and return them in JSON format.
           
           Return a JSON object with these fields:
+          - jobTitle: The exact job title mentioned in the description
+          - company: The company name (if mentioned, otherwise "Company")
           - skills: Array of technical and soft skills mentioned
           - experience: Array of experience requirements (years, specific roles, etc.)
           - qualifications: Array of educational or certification requirements
           - keywords: Array of important keywords that should appear in a resume
           - responsibilities: Array of key job responsibilities mentioned
           
-          Focus on actionable, specific requirements that can be matched against a resume.`
+          Extract the job title and company name from the text. Focus on actionable, specific requirements that can be matched against a resume.`
         },
         {
           role: "user",
-          content: `Job Title: ${jobTitle}\n\nJob Description: ${jobDescription}`
+          content: `Job Description: ${jobDescription}`
         }
       ],
       response_format: { type: "json_object" },
@@ -56,11 +64,15 @@ export async function analyzeJobDescription(jobTitle: string, jobDescription: st
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
     return {
-      skills: result.skills || [],
-      experience: result.experience || [],
-      qualifications: result.qualifications || [],
-      keywords: result.keywords || [],
-      responsibilities: result.responsibilities || []
+      jobTitle: result.jobTitle || "Job Position",
+      company: result.company || "Company",
+      requirements: {
+        skills: result.skills || [],
+        experience: result.experience || [],
+        qualifications: result.qualifications || [],
+        keywords: result.keywords || [],
+        responsibilities: result.responsibilities || []
+      }
     };
   } catch (error) {
     console.error("Error analyzing job description:", error);

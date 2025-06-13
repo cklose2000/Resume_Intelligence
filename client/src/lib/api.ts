@@ -17,6 +17,8 @@ export interface JobAnalysisResponse {
     keywords: string[];
   };
   requirements: JobRequirements;
+  jobTitle: string;
+  company: string;
 }
 
 export interface ResumeScores {
@@ -56,11 +58,9 @@ export interface DocumentTemplate {
   description: string;
 }
 
-export async function analyzeJob(jobTitle: string, jobDescription: string): Promise<JobAnalysisResponse> {
+export async function analyzeJob(jobDescription: string): Promise<JobAnalysisResponse> {
   const response = await apiRequest("POST", "/api/analyze-job", {
-    jobTitle,
     jobDescription,
-    userId: null, // For now, not implementing user authentication
   });
   
   return response.json();

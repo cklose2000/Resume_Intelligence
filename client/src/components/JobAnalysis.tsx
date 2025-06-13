@@ -13,14 +13,16 @@ interface JobAnalysisProps {
 }
 
 export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
-  const [jobTitle, setJobTitle] = useState('');
   const [jobDescription, setJobDescription] = useState('');
   const [extractedRequirements, setExtractedRequirements] = useState<string[]>([]);
   const { toast } = useToast();
 
   const analyzeJobMutation = useMutation({
-    mutationFn: ({ title, description }: { title: string; description: string }) =>
-      analyzeJob(title, description),
+    mutationFn: (description: string) => {
+      // Extract job title from description - we'll let the AI handle this
+      const title = "Job Position"; // Placeholder - AI will extract the real title
+      return analyzeJob(title, description);
+    },
     onSuccess: (data) => {
       setExtractedRequirements(data.requirements.skills.concat(
         data.requirements.experience,
@@ -44,15 +46,15 @@ export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!jobTitle.trim() || !jobDescription.trim()) {
+    if (!jobDescription.trim()) {
       toast({
         title: "Missing Information",
-        description: "Please provide both job title and description.",
+        description: "Please paste the job description.",
         variant: "destructive",
       });
       return;
     }
-    analyzeJobMutation.mutate({ title: jobTitle, description: jobDescription });
+    analyzeJobMutation.mutate(jobDescription);
   };
 
   return (
@@ -67,35 +69,21 @@ export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="jobTitle">
-              Job Title <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="jobTitle"
-              type="text"
-              placeholder="e.g., Senior Software Engineer"
-              value={jobTitle}
-              onChange={(e) => setJobTitle(e.target.value)}
-              required
-            />
-          </div>
-          
-          <div>
             <Label htmlFor="jobDescription">
               Job Description <span className="text-red-500">*</span>
             </Label>
             <Textarea
               id="jobDescription"
-              placeholder="Paste the complete job description here..."
-              rows={8}
+              placeholder="Paste the complete job description from LinkedIn, Indeed, or any job board..."
+              rows={10}
               value={jobDescription}
               onChange={(e) => setJobDescription(e.target.value)}
               className="resize-none"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
-              <i className="fas fa-lightbulb text-amber-500"></i>
-              {' '}Include requirements, responsibilities, and qualifications
+              <i className="fas fa-magic text-blue-500"></i>
+              {' '}AI will automatically extract job title, company, requirements, and keywords
             </p>
           </div>
 
@@ -111,8 +99,8 @@ export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
               </>
             ) : (
               <>
-                <i className="fas fa-search mr-2"></i>
-                Analyze Job Requirements
+                <i className="fas fa-magic mr-2"></i>
+                Analyze with AI
               </>
             )}
           </Button>

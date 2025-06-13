@@ -10,7 +10,8 @@ import {
 import { 
   analyzeJobDescription, 
   analyzeResumeAlignment, 
-  generateOptimizedContent 
+  generateOptimizedContent,
+  type JobAnalysisResult 
 } from "./lib/openai";
 import { 
   processFile, 
@@ -42,27 +43,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Analyze job description
   app.post("/api/analyze-job", async (req, res) => {
     try {
-      const validatedData = insertJobAnalysisSchema.parse(req.body);
+      const { jobDescription } = req.body;
       
-      const requirements = await analyzeJobDescription(
-        validatedData.jobTitle,
-        validatedData.jobDescription
-      );
+      if (!jobDescription) {
+        return res.status(400).json({ message: "Job description is required" });
+      }
+      
+      const analysisResult = await analyzeJobDescription(jobDescription);
       
       const jobAnalysis = await storage.createJobAnalysis({
-        ...validatedData,
+        userId: null,
+        jobTitle: analysisResult.jobTitle,
+        jobDescription,
         extractedRequirements: [
-          ...requirements.skills,
-          ...requirements.experience,
-          ...requirements.qualifications,
-          ...requirements.responsibilities
+          ...analysisResult.requirements.skills,
+          ...analysisResult.requirements.experience,
+          ...analysisResult.requirements.qualifications,
+          ...analysisResult.requirements.responsibilities
         ],
-        keywords: requirements.keywords,
+        keywords: analysisResult.requirements.keywords,
       });
       
       res.json({ 
         jobAnalysis,
-        requirements 
+        requirements: analysisResult.requirements,
+        jobTitle: analysisResult.jobTitle,
+        company: analysisResult.company
       });
     } catch (error) {
       console.error("Error analyzing job:", error);
