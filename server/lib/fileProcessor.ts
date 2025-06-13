@@ -1,5 +1,6 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import mammoth from 'mammoth';
 
 export interface ProcessedFile {
   content: string;
@@ -47,12 +48,22 @@ async function processPdfFile(filePath: string, originalName: string): Promise<P
 }
 
 async function processDocxFile(filePath: string, originalName: string): Promise<ProcessedFile> {
-  // For now, return a placeholder - in a real implementation, you'd use mammoth
-  // const mammoth = require('mammoth');
-  // const result = await mammoth.extractRawText({ path: filePath });
-  // return { content: result.value, fileName: originalName, fileType: 'docx' };
-  
-  throw new Error("DOCX processing not yet implemented. Please use .txt files.");
+  try {
+    const result = await mammoth.extractRawText({ path: filePath });
+    const content = result.value.trim();
+    
+    if (!content) {
+      throw new Error('No text content found in DOCX file');
+    }
+    
+    return {
+      content,
+      fileName: originalName,
+      fileType: 'docx'
+    };
+  } catch (error) {
+    throw new Error(`Failed to process DOCX file: ${error.message}`);
+  }
 }
 
 export async function saveUploadedFile(fileBuffer: Buffer, originalName: string): Promise<string> {
