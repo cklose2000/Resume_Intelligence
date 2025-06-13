@@ -210,14 +210,29 @@ export async function generateOptimizedContent(
         },
         {
           role: "user",
-          content: `Original Resume:\n${originalContent}\n\nApply these recommendations:\n${JSON.stringify(applicableRecommendations, null, 2)}\n\nIMPORTANT: Return the optimized resume as clean plain text with no markdown formatting, tables, or special characters.`
+          content: `Original Resume:\n${originalContent}\n\nApply these recommendations:\n${JSON.stringify(applicableRecommendations, null, 2)}\n\nCRITICAL FORMATTING REQUIREMENTS:
+          
+1. Write in complete, well-formed sentences with proper spacing
+2. Each sentence should flow naturally without awkward line breaks  
+3. Use standard paragraph formatting with proper line breaks between sections
+4. Do NOT break sentences in the middle of words or phrases
+5. Ensure all text reads as professional, coherent prose
+6. Use consistent spacing and punctuation throughout
+7. Return ONLY clean, readable plain text suitable for professional documents
+
+EXAMPLE SENTENCE STRUCTURE:
+"Led development of cloud-native data platforms that power machine learning products and analytics at Fortune 500 scale."
+
+NOT: "Led development of cloud native data platforms that power machine learning products and analytics at Fortune 500 scale."
+
+Return the complete optimized resume with proper formatting now.`
         }
       ],
     });
 
     let optimizedContent = response.choices[0].message.content || originalContent;
     
-    // Post-process to clean up formatting issues
+    // Comprehensive post-processing to fix all formatting issues
     optimizedContent = optimizedContent
       .replace(/\|/g, '')                     // Remove ALL pipe characters
       .replace(/-{2,}/g, '')                  // Remove multiple hyphens/table separators
@@ -233,8 +248,15 @@ export async function generateOptimizedContent(
       .replace(/\s*-\s*\|\s*/g, ' ')          // Remove dash-pipe combinations
       .replace(/\s*\|\s*-\s*/g, ' ')          // Remove pipe-dash combinations
       .replace(/(\w)\s*\|\s*(\w)/g, '$1 $2')  // Replace pipes between words with spaces
-      .replace(/\s*-\s*([A-Z])/g, ' $1')      // Fix spacing around hyphens before capitals
-      .replace(/([a-z])\s*-\s*([a-z])/g, '$1-$2') // Keep proper hyphenated words
+      
+      // Fix awkward spacing and word breaks
+      .replace(/\s+([a-z])\s+/g, ' $1 ')      // Fix isolated single letters
+      .replace(/(\w)\s+\n\s*(\w)/g, '$1 $2')  // Join broken words across lines
+      .replace(/([a-z])\s+([a-z])\s+([a-z])\s+([a-z])/g, '$1 $2 $3 $4') // Fix excessive spacing
+      .replace(/\b(\w)\s+(\w)\b(?!\s+[A-Z])/g, '$1$2') // Fix broken compound words
+      .replace(/([a-z])\s+([a-z])\s*\n/g, '$1$2\n') // Fix word breaks at line ends
+      
+      // Fix parentheses and punctuation
       .replace(/\(\s*([^)]+)\s*\)/g, ' ($1)') // Fix parentheses spacing
       .replace(/([a-z])\s*\(\s*([^)]+)\s*\)\s*([a-z])/gi, '$1 ($2) $3') // Better parentheses formatting
       .replace(/([.!?])\s*([A-Z])/g, '$1 $2') // Ensure space after sentence endings
@@ -242,9 +264,26 @@ export async function generateOptimizedContent(
       .replace(/\s*\.\s*/g, '. ')             // Fix period spacing
       .replace(/\s*:\s*/g, ': ')              // Fix colon spacing
       .replace(/\s*;\s*/g, '; ')              // Fix semicolon spacing
-      .replace(/\s{2,}/g, ' ')                // Normalize multiple spaces to single space
+      
+      // Fix hyphenation and compound words
+      .replace(/\s*-\s*([A-Z])/g, ' $1')      // Fix spacing around hyphens before capitals
+      .replace(/([a-z])\s*-\s*([a-z])/g, '$1-$2') // Keep proper hyphenated words
+      .replace(/cloud\s+native/gi, 'cloud-native') // Fix specific compound terms
+      .replace(/real\s+time/gi, 'real-time')   // Fix real-time
+      .replace(/data\s+driven/gi, 'data-driven') // Fix data-driven
+      
+      // Clean up excessive spacing and line breaks
+      .replace(/\s{3,}/g, ' ')                // Normalize excessive spaces
       .replace(/\n\s*\n\s*\n/g, '\n\n')       // Normalize line breaks
       .replace(/^\s+|\s+$/gm, '')             // Trim each line
+      .replace(/\s+$/gm, '')                  // Remove trailing spaces
+      
+      // Final cleanup
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n')             // Ensure max 2 consecutive line breaks
       .trim();
 
     return optimizedContent;
