@@ -9,10 +9,11 @@ import { useToast } from '@/hooks/use-toast';
 
 interface ResumeAnalysisProps {
   analysis: ResumeAnalysisResponse | null;
-  onOptimizationComplete: (optimizedContent: string) => void;
+  onOptimizationComplete: (optimizedContent: string, recommendations: string[]) => void;
+  onOptimizationStart?: (recommendations: string[]) => void;
 }
 
-export function ResumeAnalysis({ analysis, onOptimizationComplete }: ResumeAnalysisProps) {
+export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizationStart }: ResumeAnalysisProps) {
   const [appliedRecommendations, setAppliedRecommendations] = useState<string[]>([]);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const { toast } = useToast();
@@ -23,7 +24,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete }: ResumeAnaly
       return optimizeResume(analysis.resumeAnalysis.id, recommendations);
     },
     onSuccess: (data) => {
-      onOptimizationComplete(data.optimizedContent);
+      onOptimizationComplete(data.optimizedContent, appliedRecommendations);
       toast({
         title: "Resume Optimized",
         description: `Applied ${appliedRecommendations.length} recommendations successfully.`,

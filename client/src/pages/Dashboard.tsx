@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { JobAnalysis } from '@/components/JobAnalysis';
 import { ResumeUpload } from '@/components/ResumeUpload';
 import { ResumeAnalysis } from '@/components/ResumeAnalysis';
+import { ContentPreview } from '@/components/ContentPreview';
 import { DocumentGeneration } from '@/components/DocumentGeneration';
 import { Card, CardContent } from '@/components/ui/card';
 import type { JobAnalysisResponse, ResumeAnalysisResponse } from '@/lib/api';
@@ -10,6 +11,8 @@ export default function Dashboard() {
   const [jobAnalysis, setJobAnalysis] = useState<JobAnalysisResponse | null>(null);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysisResponse | null>(null);
   const [optimizedContent, setOptimizedContent] = useState<string>('');
+  const [appliedRecommendations, setAppliedRecommendations] = useState<string[]>([]);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
   const handleJobAnalysisComplete = (analysis: JobAnalysisResponse) => {
     setJobAnalysis(analysis);
@@ -19,8 +22,15 @@ export default function Dashboard() {
     setResumeAnalysis(analysis);
   };
 
-  const handleOptimizationComplete = (content: string) => {
+  const handleOptimizationComplete = (content: string, recommendations: string[]) => {
     setOptimizedContent(content);
+    setAppliedRecommendations(recommendations);
+    setIsOptimizing(false);
+  };
+
+  const handleOptimizationStart = (recommendations: string[]) => {
+    setAppliedRecommendations(recommendations);
+    setIsOptimizing(true);
   };
 
   const beforeScore = resumeAnalysis?.scores.overall;
@@ -96,13 +106,24 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Resume Analysis Results */}
+        {/* Resume Analysis & Content Preview */}
         {resumeAnalysis && (
-          <div className="mt-8">
-            <ResumeAnalysis 
-              analysis={resumeAnalysis}
-              onOptimizationComplete={handleOptimizationComplete}
-            />
+          <div className="mt-8 grid lg:grid-cols-2 gap-8">
+            <div>
+              <ResumeAnalysis 
+                analysis={resumeAnalysis}
+                onOptimizationComplete={handleOptimizationComplete}
+                onOptimizationStart={handleOptimizationStart}
+              />
+            </div>
+            <div>
+              <ContentPreview
+                originalContent={resumeAnalysis.resumeAnalysis.originalContent}
+                optimizedContent={optimizedContent}
+                appliedRecommendations={appliedRecommendations}
+                isOptimizing={isOptimizing}
+              />
+            </div>
           </div>
         )}
 
