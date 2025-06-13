@@ -120,7 +120,7 @@ export function ContentPreview({
   }, [originalContent, optimizedContent, isEditing]);
 
   const renderDiffContent = () => {
-    // Clean content and preserve line breaks for better formatting
+    // Process content to create proper paragraphs and sections
     const formatText = (text: string) => {
       return text
         .replace(/\|/g, ' ') // Remove pipe characters
@@ -129,24 +129,63 @@ export function ContentPreview({
         .trim();
     };
 
+    const createParagraphs = (text: string) => {
+      // Split content into logical sections based on common patterns
+      const sections = text
+        .split(/(?=PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i)
+        .filter(section => section.trim().length > 0);
+      
+      return sections.map(section => {
+        const trimmedSection = section.trim();
+        
+        // If it's a header section, format it specially
+        if (/^(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i.test(trimmedSection)) {
+          const lines = trimmedSection.split(/(?=[A-Z]{2,}|•|\d{4}|\w+\s+\d{4}|[A-Z][a-z]+\s+[A-Z][a-z]+)/);
+          return lines.filter(line => line.trim().length > 0);
+        }
+        
+        // For other content, split by natural breaks
+        const sentences = trimmedSection.split(/(?<=\.)\s+(?=[A-Z])|(?<=:)\s+|(?<=•)\s*/);
+        return sentences.filter(sentence => sentence.trim().length > 0);
+      }).flat();
+    };
+
     if (!diffParts) {
       const formattedContent = formatText(contentToShow);
+      const paragraphs = createParagraphs(formattedContent);
       
       return (
-        <div className="font-sans text-sm text-gray-800 leading-relaxed">
-          <div 
-            className="whitespace-pre-line"
-            style={{
-              lineHeight: '1.6',
-              wordBreak: 'break-word'
-            }}
-          >
-            {formattedContent.split('\n').map((line, index) => (
-              <div key={index} className="mb-2">
-                {line.trim() || '\u00A0'}
+        <div className="font-sans text-sm text-gray-800 leading-relaxed space-y-4">
+          {paragraphs.map((paragraph, index) => {
+            const trimmedParagraph = paragraph.trim();
+            
+            // Check if it's a section header
+            if (/^(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i.test(trimmedParagraph)) {
+              return (
+                <div key={index} className="font-bold text-gray-900 text-base uppercase tracking-wide border-b border-gray-300 pb-1 mb-3 mt-6">
+                  {trimmedParagraph}
+                </div>
+              );
+            }
+            
+            // Check if it's a job title or company
+            if (/^[A-Z][A-Za-z\s]+(–|—|\s-\s)[A-Z]/.test(trimmedParagraph) || 
+                /^\w+\s+\d{4}/.test(trimmedParagraph) ||
+                /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(trimmedParagraph)) {
+              return (
+                <div key={index} className="font-semibold text-gray-800 mt-4 mb-2">
+                  {trimmedParagraph}
+                </div>
+              );
+            }
+            
+            // Regular paragraph content
+            return (
+              <div key={index} className="mb-3 leading-relaxed">
+                {trimmedParagraph}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       );
     }
@@ -154,7 +193,7 @@ export function ContentPreview({
     return (
       <div className="font-sans text-sm text-gray-800 leading-relaxed">
         <div 
-          className="whitespace-pre-line"
+          className="space-y-3"
           style={{
             lineHeight: '1.6',
             wordBreak: 'break-word'
