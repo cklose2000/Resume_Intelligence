@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Brain, Check, Clock } from 'lucide-react';
 import { optimizeResume, type ResumeAnalysisResponse, type OptimizationRecommendation } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -175,8 +176,9 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
                             variant="outline"
                             onClick={() => handleRemoveRecommendation(recommendation.id)}
                             disabled={optimizeResumeMutation.isPending}
+                            className="text-green-700 border-green-200 bg-green-50"
                           >
-                            <i className="fas fa-check mr-1"></i>
+                            <Check className="h-4 w-4 mr-1" />
                             Applied
                           </Button>
                         ) : (
@@ -184,11 +186,19 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
                             size="sm"
                             onClick={() => handleApplyRecommendation(recommendation.id)}
                             disabled={optimizeResumeMutation.isPending}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white"
                           >
                             {optimizeResumeMutation.isPending ? (
-                              <i className="fas fa-spinner fa-spin mr-1"></i>
-                            ) : null}
-                            Apply Suggestion
+                              <>
+                                <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                                AI Thinking...
+                              </>
+                            ) : (
+                              <>
+                                <Brain className="h-4 w-4 mr-2" />
+                                Apply Suggestion
+                              </>
+                            )}
                           </Button>
                         )}
                       </div>

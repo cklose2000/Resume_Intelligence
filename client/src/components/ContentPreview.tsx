@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Download, Edit3, Eye, Save } from 'lucide-react';
+import { Download, Edit3, Eye, Save, Clock } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { generateDocument, getTemplates, type DocumentTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import * as Diff from 'diff';
 
 interface ContentPreviewProps {
   originalContent: string;
@@ -98,6 +99,54 @@ export function ContentPreview({
   const hasOptimizations = optimizedContent !== null;
   const hasAppliedRecommendations = appliedRecommendations.length > 0;
 
+  // Calculate diff to highlight changes
+  const diffParts = useMemo(() => {
+    if (!optimizedContent || isEditing) return null;
+    
+    const changes = Diff.diffWordsWithSpace(originalContent, optimizedContent);
+    return changes;
+  }, [originalContent, optimizedContent, isEditing]);
+
+  const renderDiffContent = () => {
+    if (!diffParts) {
+      return (
+        <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
+          {contentToShow}
+        </pre>
+      );
+    }
+
+    return (
+      <div className="font-sans text-sm text-gray-800 leading-relaxed">
+        {diffParts.map((part, index) => {
+          if (part.added) {
+            return (
+              <span
+                key={index}
+                className="bg-green-100 text-green-800 px-1 rounded border-l-2 border-green-400 font-medium"
+                title="AI-added content"
+              >
+                {part.value}
+              </span>
+            );
+          } else if (part.removed) {
+            return (
+              <span
+                key={index}
+                className="bg-red-100 text-red-800 px-1 rounded line-through opacity-60"
+                title="Removed content"
+              >
+                {part.value}
+              </span>
+            );
+          } else {
+            return <span key={index}>{part.value}</span>;
+          }
+        })}
+      </div>
+    );
+  };
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -117,8 +166,9 @@ export function ContentPreview({
             )}
             
             {isOptimizing && (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700">
-                Updating...
+              <Badge variant="secondary" className="bg-amber-100 text-amber-700 flex items-center space-x-1">
+                <Clock className="h-3 w-3 animate-spin" />
+                <span>AI is thinking...</span>
               </Badge>
             )}
             
@@ -134,14 +184,26 @@ export function ContentPreview({
           </div>
         </div>
 
-        {hasOptimizations && (
+        {hasOptimizations && !isOptimizing && (
           <div className="text-sm text-green-600 bg-green-50 rounded-lg p-3 border border-green-200">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <span className="font-medium">Content updated with AI optimizations</span>
             </div>
             <p className="text-green-700 mt-1">
-              Resume has been enhanced based on your applied suggestions. You can further edit the content below.
+              <span className="bg-green-100 text-green-800 px-1 rounded font-medium">Green highlights</span> show AI-added content. You can further edit the content below.
+            </p>
+          </div>
+        )}
+
+        {isOptimizing && (
+          <div className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3 border border-amber-200">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 animate-spin" />
+              <span className="font-medium">AI is analyzing and optimizing your resume...</span>
+            </div>
+            <p className="text-amber-700 mt-1">
+              This may take a few moments. Changes will be highlighted when complete.
             </p>
           </div>
         )}
@@ -178,9 +240,7 @@ export function ContentPreview({
             </div>
           ) : (
             <div className="bg-gray-50 rounded-lg p-4 border min-h-[400px]">
-              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
-                {contentToShow}
-              </pre>
+              {renderDiffContent()}
             </div>
           )}
         </div>
