@@ -130,15 +130,8 @@ export function ContentPreview({
               </span>
             );
           } else if (part.removed) {
-            return (
-              <span
-                key={index}
-                className="bg-red-100 text-red-800 px-1 rounded line-through opacity-60"
-                title="Removed content"
-              >
-                {part.value}
-              </span>
-            );
+            // Skip removed content - don't render crossed-out text
+            return null;
           } else {
             return <span key={index}>{part.value}</span>;
           }

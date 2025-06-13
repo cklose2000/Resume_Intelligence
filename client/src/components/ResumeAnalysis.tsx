@@ -17,6 +17,7 @@ interface ResumeAnalysisProps {
 export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizationStart }: ResumeAnalysisProps) {
   const [appliedRecommendations, setAppliedRecommendations] = useState<string[]>([]);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
+  const [loadingRecommendationId, setLoadingRecommendationId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const optimizeResumeMutation = useMutation({
@@ -25,6 +26,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
       return optimizeResume(analysis.resumeAnalysis.id, recommendations);
     },
     onSuccess: (data) => {
+      setLoadingRecommendationId(null);
       onOptimizationComplete(data.optimizedContent, appliedRecommendations);
       toast({
         title: "Resume Optimized",
@@ -32,6 +34,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
       });
     },
     onError: (error) => {
+      setLoadingRecommendationId(null);
       toast({
         title: "Optimization Failed",
         description: error instanceof Error ? error.message : "Failed to optimize resume",
@@ -43,6 +46,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
   const handleApplyRecommendation = (recommendationId: string) => {
     const newApplied = [...appliedRecommendations, recommendationId];
     setAppliedRecommendations(newApplied);
+    setLoadingRecommendationId(recommendationId);
     onOptimizationStart?.(newApplied);
     optimizeResumeMutation.mutate(newApplied);
   };
@@ -185,10 +189,10 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
                           <Button
                             size="sm"
                             onClick={() => handleApplyRecommendation(recommendation.id)}
-                            disabled={optimizeResumeMutation.isPending}
+                            disabled={optimizeResumeMutation.isPending || loadingRecommendationId !== null}
                             className="bg-indigo-600 hover:bg-indigo-700 text-white"
                           >
-                            {optimizeResumeMutation.isPending ? (
+                            {loadingRecommendationId === recommendation.id ? (
                               <>
                                 <Brain className="h-4 w-4 mr-2 animate-pulse" />
                                 AI Thinking...
