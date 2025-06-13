@@ -1,0 +1,42 @@
+Sarah Johnson
+Product Manager
+Email: sarah.johnson@email.com | Phone: (555) 987-6543
+LinkedIn: linkedin.com/in/sarahjohnson
+
+PROFESSIONAL EXPERIENCE
+
+Senior Product Manager | TechFlow Inc. | 2021 - Present
+• Led cross-functional teams of 12+ engineers and designers to deliver B2B SaaS products
+• Increased user engagement by 45% through data-driven feature prioritization
+• Managed product roadmap for analytics dashboard serving 10,000+ enterprise clients
+• Collaborated with sales team to identify customer pain points and feature requirements
+
+Product Manager | StartupXYZ | 2019 - 2021
+• Launched 3 major product features that generated $2M in additional revenue
+• Conducted user research and A/B testing to optimize conversion funnel
+• Worked with engineering team to implement agile development processes
+• Created product specifications and wireframes for mobile applications
+
+Business Analyst | DataCorp | 2017 - 2019
+• Analyzed customer data to identify trends and business opportunities
+• Built dashboards and reports using SQL and Tableau
+• Presented insights to C-level executives and stakeholders
+• Supported product decisions with quantitative analysis
+
+EDUCATION
+Master of Business Administration (MBA) | Stanford University | 2017
+Bachelor of Science in Computer Science | UC Berkeley | 2015
+
+SKILLS
+• Product Strategy & Roadmapping
+• Data Analysis & Visualization (SQL, Tableau, Excel)
+• Agile Development & Scrum
+• User Research & A/B Testing
+• Cross-functional Team Leadership
+• Technical Communication
+• Market Research & Competitive Analysis
+
+ACHIEVEMENTS
+• Led product that achieved 99.9% uptime and served 1M+ daily active users
+• Reduced customer churn by 25% through improved onboarding experience
+• Recognized as "Rising Star" at TechFlow Inc. annual awards
