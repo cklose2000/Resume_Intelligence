@@ -15,13 +15,12 @@ interface JobAnalysisProps {
 export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
   const [jobDescription, setJobDescription] = useState('');
   const [extractedRequirements, setExtractedRequirements] = useState<string[]>([]);
+  const [extractedJobInfo, setExtractedJobInfo] = useState<{title: string, company: string} | null>(null);
   const { toast } = useToast();
 
   const analyzeJobMutation = useMutation({
     mutationFn: (description: string) => {
-      // Extract job title from description - we'll let the AI handle this
-      const title = "Job Position"; // Placeholder - AI will extract the real title
-      return analyzeJob(title, description);
+      return analyzeJob(description);
     },
     onSuccess: (data) => {
       setExtractedRequirements(data.requirements.skills.concat(
@@ -29,10 +28,11 @@ export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
         data.requirements.qualifications,
         data.requirements.responsibilities
       ));
+      setExtractedJobInfo({ title: data.jobTitle, company: data.company });
       onAnalysisComplete(data);
       toast({
         title: "Job Analysis Complete",
-        description: "Successfully extracted key requirements from the job description.",
+        description: `Extracted ${data.jobTitle} at ${data.company}`,
       });
     },
     onError: (error) => {
@@ -106,8 +106,26 @@ export function JobAnalysis({ onAnalysisComplete }: JobAnalysisProps) {
           </Button>
         </form>
 
+        {extractedJobInfo && (
+          <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
+            <h3 className="font-medium text-emerald-900 mb-3">Job Information Extracted:</h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-sm">
+                <i className="fas fa-briefcase text-emerald-600"></i>
+                <span className="font-medium text-emerald-800">Position:</span>
+                <span className="text-emerald-700">{extractedJobInfo.title}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm">
+                <i className="fas fa-building text-emerald-600"></i>
+                <span className="font-medium text-emerald-800">Company:</span>
+                <span className="text-emerald-700">{extractedJobInfo.company}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {extractedRequirements.length > 0 && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="font-medium text-blue-900 mb-2">Key Requirements Detected:</h3>
             <div className="space-y-2">
               {extractedRequirements.slice(0, 5).map((requirement, index) => (
