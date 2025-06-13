@@ -120,43 +120,65 @@ export function ContentPreview({
   }, [originalContent, optimizedContent, isEditing]);
 
   const renderDiffContent = () => {
+    // Clean content and preserve line breaks for better formatting
+    const formatText = (text: string) => {
+      return text
+        .replace(/\|/g, ' ') // Remove pipe characters
+        .replace(/-{2,}/g, ' ') // Remove multiple hyphens
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim();
+    };
+
     if (!diffParts) {
-      // Clean the content for display even when not showing diffs
-      const cleanContent = (content: string) => {
-        return content
-          .replace(/\|/g, ' ') // Remove pipe characters
-          .replace(/-{2,}/g, ' ') // Remove multiple hyphens
-          .replace(/\s+/g, ' ') // Normalize spaces
-          .trim();
-      };
+      const formattedContent = formatText(contentToShow);
       
       return (
-        <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
-          {cleanContent(contentToShow)}
-        </pre>
+        <div className="font-sans text-sm text-gray-800 leading-relaxed">
+          <div 
+            className="whitespace-pre-line"
+            style={{
+              lineHeight: '1.6',
+              wordBreak: 'break-word'
+            }}
+          >
+            {formattedContent.split('\n').map((line, index) => (
+              <div key={index} className="mb-2">
+                {line.trim() || '\u00A0'}
+              </div>
+            ))}
+          </div>
+        </div>
       );
     }
 
     return (
       <div className="font-sans text-sm text-gray-800 leading-relaxed">
-        {diffParts.map((part, index) => {
-          if (part.added) {
-            return (
-              <span
-                key={index}
-                className="bg-green-100 text-green-800 px-1 rounded border-l-2 border-green-400 font-medium"
-                title="AI-added content"
-              >
-                {part.value}
-              </span>
-            );
-          } else if (part.removed) {
-            // Skip removed content - don't render crossed-out text
-            return null;
-          } else {
-            return <span key={index}>{part.value}</span>;
-          }
-        })}
+        <div 
+          className="whitespace-pre-line"
+          style={{
+            lineHeight: '1.6',
+            wordBreak: 'break-word'
+          }}
+        >
+          {diffParts.map((part, index) => {
+            if (part.added) {
+              return (
+                <span
+                  key={index}
+                  className="bg-green-100 text-green-800 px-1 rounded border-l-2 border-green-400 font-medium"
+                  title="AI-added content"
+                >
+                  {part.value}
+                </span>
+              );
+            } else if (part.removed) {
+              // Skip removed content - don't render crossed-out text
+              return null;
+            } else {
+              return <span key={index}>{part.value}</span>;
+            }
+          })}
+        </div>
       </div>
     );
   };

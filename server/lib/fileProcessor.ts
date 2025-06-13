@@ -49,8 +49,17 @@ async function processPdfFile(filePath: string, originalName: string): Promise<P
 
 async function processDocxFile(filePath: string, originalName: string): Promise<ProcessedFile> {
   try {
-    const result = await mammoth.extractRawText({ path: filePath });
-    const content = result.value.trim();
+    // Use convertToHtml to preserve document structure, then extract text with line breaks
+    const result = await mammoth.convertToHtml({ path: filePath });
+    
+    // Convert HTML to plain text while preserving paragraph structure
+    let content = result.value
+      .replace(/<p[^>]*>/g, '') // Remove opening paragraph tags
+      .replace(/<\/p>/g, '\n\n') // Replace closing paragraph tags with double line breaks
+      .replace(/<br[^>]*>/g, '\n') // Replace line breaks
+      .replace(/<[^>]*>/g, '') // Remove all other HTML tags
+      .replace(/\n\n\n+/g, '\n\n') // Normalize multiple line breaks
+      .trim();
     
     if (!content) {
       throw new Error('No text content found in DOCX file');
