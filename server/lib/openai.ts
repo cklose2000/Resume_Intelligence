@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
-// the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+// Using o3 model as requested by the user
 const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 export interface JobRequirements {
@@ -37,26 +37,40 @@ export interface JobAnalysisResult {
 export async function analyzeJobDescription(jobDescription: string): Promise<JobAnalysisResult> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
-          content: `You are an expert job requirements analyzer. Extract key information from job descriptions and return them in JSON format.
-          
-          Return a JSON object with these fields:
-          - jobTitle: The exact job title mentioned in the description
-          - company: The company name (if mentioned, otherwise "Company")
-          - skills: Array of technical and soft skills mentioned
-          - experience: Array of experience requirements (years, specific roles, etc.)
-          - qualifications: Array of educational or certification requirements
-          - keywords: Array of important keywords that should appear in a resume
-          - responsibilities: Array of key job responsibilities mentioned
-          
-          Extract the job title and company name from the text. Focus on actionable, specific requirements that can be matched against a resume.`
+          content: `You are an expert job description parser. Your primary task is to accurately extract the job title and company name from job postings, along with requirements.
+
+CRITICAL: Pay close attention to the EXACT job title and company name as they appear in the text.
+
+For job title extraction:
+- Look for phrases like "Job Title:", "Position:", "Role:", or titles that appear prominently
+- Common patterns: "[Title] at [Company]", "[Company] is hiring [Title]", "We are looking for a [Title]"
+- If multiple titles exist, choose the most prominent/specific one
+- Never make up or modify the title - use exactly what's written
+
+For company extraction:
+- Look for company names in headers, signatures, or "at [Company]" patterns
+- Common patterns: "[Title] at [Company]", "[Company] careers", "Join [Company]"
+- If no company is explicitly mentioned, use "Company"
+- Use the exact company name as written
+
+Return JSON with these exact fields:
+- jobTitle: The exact job title found (be very precise)
+- company: The exact company name found or "Company" if not found
+- skills: Array of technical and soft skills mentioned
+- experience: Array of experience requirements
+- qualifications: Array of educational requirements
+- keywords: Array of important ATS keywords
+- responsibilities: Array of key job responsibilities`
         },
         {
           role: "user",
-          content: `Job Description: ${jobDescription}`
+          content: `Parse this job description and extract the exact job title and company name:
+
+${jobDescription}`
         }
       ],
       response_format: { type: "json_object" },
@@ -86,7 +100,7 @@ export async function analyzeResumeAlignment(
 ): Promise<{ scores: ResumeScores; recommendations: OptimizationRecommendation[] }> {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
@@ -150,7 +164,7 @@ export async function generateOptimizedContent(
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "o3-mini",
       messages: [
         {
           role: "system",
