@@ -130,23 +130,27 @@ export function ContentPreview({
     };
 
     const createParagraphs = (text: string) => {
-      // Split content into logical sections based on common patterns
+      // First, split by common resume section headers
       const sections = text
-        .split(/(?=PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i)
+        .split(/(?=PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|CONTACT|EXPERIENCE|DATA[-\s]?DRIVEN|INFRASTRUCTURE|AWS)/i)
         .filter(section => section.trim().length > 0);
       
       return sections.map(section => {
         const trimmedSection = section.trim();
         
-        // If it's a header section, format it specially
-        if (/^(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i.test(trimmedSection)) {
-          const lines = trimmedSection.split(/(?=[A-Z]{2,}|•|\d{4}|\w+\s+\d{4}|[A-Z][a-z]+\s+[A-Z][a-z]+)/);
-          return lines.filter(line => line.trim().length > 0);
-        }
+        // Split each section into meaningful chunks
+        const lines = trimmedSection
+          .split(/\n+/)
+          .map(line => line.trim())
+          .filter(line => line.length > 0);
         
-        // For other content, split by natural breaks
-        const sentences = trimmedSection.split(/(?<=\.)\s+(?=[A-Z])|(?<=:)\s+|(?<=•)\s*/);
-        return sentences.filter(sentence => sentence.trim().length > 0);
+        return lines.map(line => {
+          // Further split long lines by sentence boundaries or bullet points
+          if (line.length > 200) {
+            return line.split(/(?<=\.)\s+(?=[A-Z•])|(?<=:)\s+(?=[A-Z])/);
+          }
+          return [line];
+        }).flat();
       }).flat();
     };
 

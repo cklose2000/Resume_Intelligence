@@ -170,21 +170,47 @@ export async function generateOptimizedContent(
           role: "system",
           content: `You are an expert resume writer. Apply the specified recommendations to improve the resume content while maintaining its original structure and voice.
           
-          Rules:
+          CRITICAL FORMATTING RULES:
+          - Return ONLY plain text content - NO markdown formatting
+          - NO pipe characters (|), hyphens for tables, or markdown syntax
+          - Use natural line breaks and spacing for readability
+          - Structure content with clear section headers in ALL CAPS
+          - Use bullet points with • symbol only where appropriate
+          - Preserve professional resume formatting without markdown artifacts
+          
+          Content Rules:
           - Preserve the overall format and structure
           - Make specific improvements based on the recommendations
           - Ensure the content remains truthful and professional
           - Improve keyword density and ATS compatibility
-          - Maintain the candidate's authentic experience and achievements`
+          - Maintain the candidate's authentic experience and achievements
+          - Format as a clean, readable resume suitable for ATS systems`
         },
         {
           role: "user",
-          content: `Original Resume:\n${originalContent}\n\nApply these recommendations:\n${JSON.stringify(applicableRecommendations, null, 2)}`
+          content: `Original Resume:\n${originalContent}\n\nApply these recommendations:\n${JSON.stringify(applicableRecommendations, null, 2)}\n\nIMPORTANT: Return the optimized resume as clean plain text with no markdown formatting, tables, or special characters.`
         }
       ],
     });
 
-    return response.choices[0].message.content || originalContent;
+    let optimizedContent = response.choices[0].message.content || originalContent;
+    
+    // Post-process to remove any remaining markdown artifacts
+    optimizedContent = optimizedContent
+      .replace(/\|/g, ' ')                    // Remove pipe characters
+      .replace(/-{2,}/g, ' ')                 // Remove multiple hyphens
+      .replace(/\*\*(.*?)\*\*/g, '$1')        // Remove bold markdown
+      .replace(/\*(.*?)\*/g, '$1')            // Remove italic markdown
+      .replace(/#{1,6}\s*/g, '')              // Remove header markdown
+      .replace(/```[\s\S]*?```/g, '')         // Remove code blocks
+      .replace(/`([^`]+)`/g, '$1')            // Remove inline code
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links
+      .replace(/^\s*[-*+]\s+/gm, '• ')        // Normalize bullet points
+      .replace(/\s+/g, ' ')                   // Normalize spaces
+      .replace(/\n\s*\n\s*\n/g, '\n\n')       // Normalize line breaks
+      .trim();
+
+    return optimizedContent;
   } catch (error) {
     console.error("Error generating optimized content:", error);
     throw new Error("Failed to generate optimized content");
