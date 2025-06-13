@@ -170,21 +170,32 @@ export async function generateOptimizedContent(
           role: "system",
           content: `You are an expert resume writer. Apply the specified recommendations to improve the resume content while maintaining its original structure and voice.
           
-          CRITICAL FORMATTING RULES:
-          - Return ONLY plain text content - NO markdown formatting
-          - NO pipe characters (|), hyphens for tables, or markdown syntax
-          - Use natural line breaks and spacing for readability
-          - Structure content with clear section headers in ALL CAPS
-          - Use bullet points with • symbol only where appropriate
-          - Preserve professional resume formatting without markdown artifacts
+          CRITICAL FORMATTING REQUIREMENTS - STRICTLY ENFORCE:
+          - Output MUST be plain text only - absolutely NO markdown, tables, or special formatting
+          - NEVER use pipe characters (|), dashes for tables, asterisks for bold, or any markdown syntax
+          - Do NOT create tables, columns, or structured layouts with special characters
+          - Use simple paragraph breaks and line spacing for organization
+          - Section headers should be in ALL CAPS on their own lines
+          - Use simple bullet points (•) sparingly and only for lists
+          - NO special characters except periods, commas, and basic punctuation
           
-          Content Rules:
-          - Preserve the overall format and structure
-          - Make specific improvements based on the recommendations
-          - Ensure the content remains truthful and professional
-          - Improve keyword density and ATS compatibility
-          - Maintain the candidate's authentic experience and achievements
-          - Format as a clean, readable resume suitable for ATS systems`
+          Content Requirements:
+          - Preserve the overall structure and professional tone
+          - Apply the specific recommendations provided
+          - Ensure all content remains truthful and authentic
+          - Enhance keyword density for ATS compatibility
+          - Maintain the candidate's genuine experience and achievements
+          - Format as clean, readable text suitable for any system
+          
+          EXAMPLE OF CORRECT FORMAT:
+          CHANDLER KLOSE
+          Northampton, MA 413-588-2411
+          cklose@gmail.com
+          
+          PROFESSIONAL EXPERIENCE
+          
+          Staff Data Engineer at Fortune 500 Company
+          Led development of cloud-native data platforms...`
         },
         {
           role: "user",
@@ -197,17 +208,23 @@ export async function generateOptimizedContent(
     
     // Post-process to remove any remaining markdown artifacts
     optimizedContent = optimizedContent
-      .replace(/\|/g, ' ')                    // Remove pipe characters
-      .replace(/-{2,}/g, ' ')                 // Remove multiple hyphens
+      .replace(/\|/g, '')                     // Remove ALL pipe characters
+      .replace(/-{2,}/g, '')                  // Remove multiple hyphens/table separators
       .replace(/\*\*(.*?)\*\*/g, '$1')        // Remove bold markdown
       .replace(/\*(.*?)\*/g, '$1')            // Remove italic markdown
+      .replace(/_{2,}(.*?)_{2,}/g, '$1')      // Remove underline markdown
       .replace(/#{1,6}\s*/g, '')              // Remove header markdown
       .replace(/```[\s\S]*?```/g, '')         // Remove code blocks
       .replace(/`([^`]+)`/g, '$1')            // Remove inline code
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Remove links
       .replace(/^\s*[-*+]\s+/gm, '• ')        // Normalize bullet points
-      .replace(/\s+/g, ' ')                   // Normalize spaces
+      .replace(/\s*\|\s*/g, ' ')              // Remove any remaining pipes with spaces
+      .replace(/\s*-\s*\|\s*/g, ' ')          // Remove dash-pipe combinations
+      .replace(/\s*\|\s*-\s*/g, ' ')          // Remove pipe-dash combinations
+      .replace(/(\w)\s*\|\s*(\w)/g, '$1 $2')  // Replace pipes between words with spaces
+      .replace(/\s{2,}/g, ' ')                // Normalize multiple spaces to single space
       .replace(/\n\s*\n\s*\n/g, '\n\n')       // Normalize line breaks
+      .replace(/^\s+|\s+$/gm, '')             // Trim each line
       .trim();
 
     return optimizedContent;
