@@ -103,15 +103,36 @@ export function ContentPreview({
   const diffParts = useMemo(() => {
     if (!optimizedContent || isEditing) return null;
     
-    const changes = Diff.diffWordsWithSpace(originalContent, optimizedContent);
+    // Clean up content before diffing to remove markdown artifacts
+    const cleanContent = (content: string) => {
+      return content
+        .replace(/\|/g, ' ') // Remove pipe characters
+        .replace(/-{2,}/g, ' ') // Remove multiple hyphens
+        .replace(/\s+/g, ' ') // Normalize spaces
+        .trim();
+    };
+    
+    const cleanOriginal = cleanContent(originalContent);
+    const cleanOptimized = cleanContent(optimizedContent);
+    
+    const changes = Diff.diffWordsWithSpace(cleanOriginal, cleanOptimized);
     return changes;
   }, [originalContent, optimizedContent, isEditing]);
 
   const renderDiffContent = () => {
     if (!diffParts) {
+      // Clean the content for display even when not showing diffs
+      const cleanContent = (content: string) => {
+        return content
+          .replace(/\|/g, ' ') // Remove pipe characters
+          .replace(/-{2,}/g, ' ') // Remove multiple hyphens
+          .replace(/\s+/g, ' ') // Normalize spaces
+          .trim();
+      };
+      
       return (
         <pre className="whitespace-pre-wrap font-sans text-sm text-gray-800 leading-relaxed">
-          {contentToShow}
+          {cleanContent(contentToShow)}
         </pre>
       );
     }

@@ -182,8 +182,17 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
                             disabled={optimizeResumeMutation.isPending}
                             className="text-green-700 border-green-200 bg-green-50"
                           >
-                            <Check className="h-4 w-4 mr-1" />
-                            Applied
+                            {loadingRecommendationId === recommendation.id ? (
+                              <>
+                                <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                                Applying...
+                              </>
+                            ) : (
+                              <>
+                                <Check className="h-4 w-4 mr-1" />
+                                Applied
+                              </>
+                            )}
                           </Button>
                         ) : (
                           <Button
@@ -195,7 +204,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
                             {loadingRecommendationId === recommendation.id ? (
                               <>
                                 <Brain className="h-4 w-4 mr-2 animate-pulse" />
-                                AI Thinking...
+                                Applying...
                               </>
                             ) : (
                               <>
