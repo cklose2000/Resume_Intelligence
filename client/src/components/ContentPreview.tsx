@@ -42,8 +42,14 @@ export function ContentPreview({
     mutationFn: (data: { content: string; template: string; format: string }) =>
       generateDocument(data.content, data.template, data.format),
     onSuccess: (data) => {
-      // Create download link
-      const blob = new Blob([data.content], { 
+      // Convert base64 content to blob for download
+      const binaryString = atob(data.content);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      const blob = new Blob([bytes], { 
         type: data.format === 'pdf' ? 'application/pdf' : 
               data.format === 'docx' ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' :
               'text/plain'

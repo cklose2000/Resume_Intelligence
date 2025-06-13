@@ -100,17 +100,17 @@ export async function getTemplates(): Promise<{ templates: DocumentTemplate[] }>
 }
 
 export async function generateDocument(
-  resumeAnalysisId: number, 
+  content: string, 
   templateName: string, 
   format: string
-): Promise<{ document: any; downloadUrl: string }> {
+): Promise<{ content: string; filename: string; format: string }> {
   const response = await apiRequest("POST", "/api/generate-document", {
-    resumeAnalysisId,
+    content,
     templateName,
     format,
   });
   
-  return response.json();
+  return response as { content: string; filename: string; format: string };
 }
 
 export async function getResumeAnalysis(id: number) {

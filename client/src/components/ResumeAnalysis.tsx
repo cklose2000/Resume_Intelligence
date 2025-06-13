@@ -42,6 +42,7 @@ export function ResumeAnalysis({ analysis, onOptimizationComplete, onOptimizatio
   const handleApplyRecommendation = (recommendationId: string) => {
     const newApplied = [...appliedRecommendations, recommendationId];
     setAppliedRecommendations(newApplied);
+    onOptimizationStart?.(newApplied);
     optimizeResumeMutation.mutate(newApplied);
   };
 

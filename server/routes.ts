@@ -202,34 +202,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Generate document
   app.post("/api/generate-document", async (req, res) => {
     try {
-      const { resumeAnalysisId, templateName, format } = req.body;
+      const { content, templateName, format } = req.body;
       
-      if (!resumeAnalysisId || !templateName || !format) {
-        return res.status(400).json({ message: "Resume analysis ID, template name, and format are required" });
+      if (!content || !templateName || !format) {
+        return res.status(400).json({ message: "Content, template name, and format are required" });
       }
       
-      const resumeAnalysis = await storage.getResumeAnalysis(resumeAnalysisId);
-      if (!resumeAnalysis) {
-        return res.status(404).json({ message: "Resume analysis not found" });
-      }
-      
-      const content = resumeAnalysis.optimizedContent || resumeAnalysis.originalContent;
-      const fileName = resumeAnalysis.fileName.replace(/\.[^/.]+$/, ""); // Remove extension
+      const fileName = `resume_${Date.now()}`;
       
       // Generate document
       const filePath = await generateDocument(content, templateName, format, fileName);
       
-      // Create document record
-      const document = await storage.createDocument({
-        resumeAnalysisId,
-        templateName,
-        format,
-        filePath,
-      });
+      // Return document content for download
+      const fs = await import('fs/promises');
+      const documentContent = await fs.readFile(filePath);
       
-      res.json({ 
-        document,
-        downloadUrl: `/api/download/${document.id}` 
+      res.json({
+        content: documentContent.toString('base64'),
+        filename: `${fileName}.${format}`,
+        format: format
       });
       
     } catch (error) {
