@@ -130,27 +130,27 @@ export function ContentPreview({
     };
 
     const createParagraphs = (text: string) => {
-      // First, split by common resume section headers
-      const sections = text
-        .split(/(?=PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|CONTACT|EXPERIENCE|DATA[-\s]?DRIVEN|INFRASTRUCTURE|AWS)/i)
-        .filter(section => section.trim().length > 0);
+      // Clean up the text first
+      const cleanedText = text
+        .replace(/\s+/g, ' ')           // Normalize spaces
+        .replace(/\n\s*\n/g, '\n\n')    // Normalize line breaks
+        .trim();
       
-      return sections.map(section => {
-        const trimmedSection = section.trim();
+      // Split into logical paragraphs by double line breaks first
+      const paragraphs = cleanedText
+        .split(/\n\n+/)
+        .filter(para => para.trim().length > 0);
+      
+      return paragraphs.map(paragraph => {
+        const trimmed = paragraph.trim();
         
-        // Split each section into meaningful chunks
-        const lines = trimmedSection
-          .split(/\n+/)
-          .map(line => line.trim())
-          .filter(line => line.length > 0);
+        // Split very long paragraphs at sentence boundaries
+        if (trimmed.length > 300) {
+          return trimmed.split(/(?<=\.)\s+(?=[A-Z])/)
+            .filter(sentence => sentence.trim().length > 0);
+        }
         
-        return lines.map(line => {
-          // Further split long lines by sentence boundaries or bullet points
-          if (line.length > 200) {
-            return line.split(/(?<=\.)\s+(?=[A-Z•])|(?<=:)\s+(?=[A-Z])/);
-          }
-          return [line];
-        }).flat();
+        return [trimmed];
       }).flat();
     };
 
@@ -159,12 +159,13 @@ export function ContentPreview({
       const paragraphs = createParagraphs(formattedContent);
       
       return (
-        <div className="font-sans text-sm text-gray-800 leading-relaxed space-y-4">
+        <div className="font-sans text-sm text-gray-800 leading-relaxed space-y-3">
           {paragraphs.map((paragraph, index) => {
             const trimmedParagraph = paragraph.trim();
             
-            // Check if it's a section header
-            if (/^(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE)/i.test(trimmedParagraph)) {
+            // Check if it's a major section header (all caps)
+            if (/^[A-Z\s&-]{5,}$/.test(trimmedParagraph) || 
+                /^(PROFESSIONAL EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|CONTACT|EXPERIENCE)$/i.test(trimmedParagraph)) {
               return (
                 <div key={index} className="font-bold text-gray-900 text-base uppercase tracking-wide border-b border-gray-300 pb-1 mb-3 mt-6">
                   {trimmedParagraph}
@@ -172,10 +173,10 @@ export function ContentPreview({
               );
             }
             
-            // Check if it's a job title or company
+            // Check if it's a job title or company (has dash or year)
             if (/^[A-Z][A-Za-z\s]+(–|—|\s-\s)[A-Z]/.test(trimmedParagraph) || 
-                /^\w+\s+\d{4}/.test(trimmedParagraph) ||
-                /^[A-Z][a-z]+\s+[A-Z][a-z]+/.test(trimmedParagraph)) {
+                /\d{4}/.test(trimmedParagraph) ||
+                (/^[A-Z]/.test(trimmedParagraph) && trimmedParagraph.length < 100)) {
               return (
                 <div key={index} className="font-semibold text-gray-800 mt-4 mb-2">
                   {trimmedParagraph}
@@ -183,9 +184,23 @@ export function ContentPreview({
               );
             }
             
-            // Regular paragraph content
+            // Regular paragraph content - split by sentences for better readability
+            const sentences = trimmedParagraph.split(/(?<=\.)\s+(?=[A-Z])/).filter(s => s.trim());
+            
+            if (sentences.length > 1) {
+              return (
+                <div key={index} className="mb-4 leading-relaxed space-y-2">
+                  {sentences.map((sentence, sIndex) => (
+                    <div key={sIndex} className="text-gray-700">
+                      {sentence.trim()}
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            
             return (
-              <div key={index} className="mb-3 leading-relaxed">
+              <div key={index} className="mb-3 leading-relaxed text-gray-700">
                 {trimmedParagraph}
               </div>
             );
