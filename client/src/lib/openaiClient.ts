@@ -320,8 +320,27 @@ Return the complete optimized resume with proper formatting now.`
     const cleanedSentences = sentences.map(sentence => this.cleanSentence(sentence));
     
     // Phase 3: Restructure into proper resume format
-    // Join sentences with newlines to preserve structure
-    const sentencesWithBreaks = cleanedSentences.join('\n');
+    // Join sentences with proper spacing
+    const sentencesWithBreaks = cleanedSentences.map((sentence, index) => {
+      const nextSentence = cleanedSentences[index + 1];
+      const prevSentence = cleanedSentences[index - 1];
+      
+      // Add extra spacing around section headers
+      if (this.isHeaderOrDate(sentence)) {
+        // Add space before header if previous line exists and isn't empty
+        const prefix = prevSentence && prevSentence.trim() ? '\n' : '';
+        return prefix + sentence + '\n';
+      }
+      
+      // Add extra space before next section header
+      if (nextSentence && this.isHeaderOrDate(nextSentence) && sentence.trim()) {
+        return sentence + '\n';
+      }
+      
+      // Regular sentences
+      return sentence;
+    }).join('\n');
+    
     const structuredContent = this.restructureResumeContent(sentencesWithBreaks);
     
     return structuredContent;
@@ -368,9 +387,11 @@ Return the complete optimized resume with proper formatting now.`
 
   private isHeaderOrDate(text: string): boolean {
     // Check if text is likely a section header or date
-    return /^[A-Z][A-Z\s&-]{3,}$/.test(text) || // All caps headers
-           /\d{4}[\s-]*\d{4}|\d{4}\s*-\s*Present/i.test(text) || // Date ranges
-           /^[A-Z][a-zA-Z\s&-]+ - [A-Za-z\s&,.-]+$/.test(text); // Job titles with companies
+    const trimmed = text.trim();
+    return /^[A-Z][A-Z\s&-]{3,}$/.test(trimmed) || // All caps headers
+           /^(PROFESSIONAL|CORE|EDUCATION|SKILLS|CERTIFICATIONS|ACHIEVEMENTS|EXPERIENCE|SUMMARY|OBJECTIVE|COMPETENCIES|RECOGNITION)/i.test(trimmed) || // Common section headers
+           /\d{4}[\s-]*\d{4}|\d{4}\s*-\s*Present/i.test(trimmed) || // Date ranges
+           /^[A-Z][a-zA-Z\s&-]+ - [A-Za-z\s&,.-]+$/.test(trimmed); // Job titles with companies
   }
 
   private cleanSentence(sentence: string): string {
@@ -402,10 +423,16 @@ Return the complete optimized resume with proper formatting now.`
   }
 
   private restructureResumeContent(content: string): string {
-    // Split content into logical sections and restructure
+    // First, ensure spacing around key sections
     let structured = content
-      // Identify and format section headers
-      .replace(/(PROFESSIONAL EXPERIENCE|WORK EXPERIENCE|EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|QUALIFICATIONS)(\s|\.)/gi, '\n\n$1\n\n')
+      // Add spacing before section headers (but not at start of content)
+      .replace(/([a-z0-9,.\)])([A-Z]{2,})/g, '$1\n\n$2')  // Add break before all-caps headers
+      
+      // Identify and format section headers with consistent spacing
+      .replace(/(PROFESSIONAL EXPERIENCE|WORK EXPERIENCE|EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|QUALIFICATIONS|RECOGNITION)(\s*)/gi, '\n\n$1\n\n')
+      
+      // Add specific handling for compound headers
+      .replace(/(PROFESSIONAL\s*SUMMARY|CORE\s*COMPETENCIES|TECHNICAL\s*SKILLS|DATA-DRIVEN\s*ACHIEVEMENTS)(\s*)/gi, '\n\n$1\n\n')
       
       // Format job titles and company information
       .replace(/([A-Z][a-zA-Z\s&-]+ - [A-Za-z\s&,.-]+)\s*(\d{4}-\d{4}|\d{4}\s*-\s*Present)/gi, '\n\n$1\n$2\n\n')
@@ -414,11 +441,12 @@ Return the complete optimized resume with proper formatting now.`
       .replace(/(\d{4}-\d{4}|\d{4}\s*-\s*Present)(?!\s*\n)/gi, '\n$1\n')
       
       // Clean up excessive line breaks
-      .replace(/\n{3,}/g, '\n\n')
-      .replace(/^\s+|\s+$/gm, '')               // Trim each line
+      .replace(/\n{4,}/g, '\n\n\n')  // Max 3 newlines
+      .replace(/^\s+|\s+$/gm, '')     // Trim each line
       .split('\n')
-      .filter(line => line.trim().length > 0)
+      .map(line => line.trim())
       .join('\n')
+      .replace(/\n{3,}/g, '\n\n')     // Final cleanup
       .trim();
 
     return structured;
