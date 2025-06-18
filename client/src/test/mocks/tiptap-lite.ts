@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import React from 'react';
 
 // Lightweight TipTap mock for faster test execution
 export const createLightweightTipTapMock = () => {
@@ -41,7 +42,7 @@ export const createLightweightTipTapMock = () => {
       }
     },
     view: {
-      dom: document.createElement('div')
+      dom: typeof document !== 'undefined' ? document.createElement('div') : {}
     }
   };
 
@@ -75,10 +76,12 @@ export const createLightweightTipTapMock = () => {
     }),
     Editor: vi.fn().mockImplementation(() => editorInstance),
     EditorContent: vi.fn(({ editor }) => {
-      const div = document.createElement('div');
-      div.setAttribute('data-testid', 'editor-content');
-      div.innerHTML = editor?.getHTML() || '';
-      return div;
+      return React.createElement('div', {
+        'data-testid': 'editor-content',
+        'role': 'textbox',
+        'contentEditable': true,
+        dangerouslySetInnerHTML: { __html: editor?.getHTML() || '<p>Mock content</p>' }
+      });
     }),
     BubbleMenu: vi.fn(({ children }) => children),
     FloatingMenu: vi.fn(({ children }) => children),

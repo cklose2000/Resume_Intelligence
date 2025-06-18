@@ -7,13 +7,15 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CHUNK_SIZE = 3;
-const MAX_RETRIES = 2;
+const CHUNK_SIZE = process.env.TEST_CHUNK_SIZE ? parseInt(process.env.TEST_CHUNK_SIZE) : 3;
+const MAX_RETRIES = process.env.TEST_MAX_RETRIES ? parseInt(process.env.TEST_MAX_RETRIES) : 2;
 
 async function runTestChunk(files, chunkIndex) {
   return new Promise((resolve, reject) => {
     console.log(`\n🧪 Running test chunk ${chunkIndex + 1} with ${files.length} files...`);
+    files.forEach(f => console.log(`  - ${path.basename(f)}`));
     
+    const startTime = Date.now();
     const child = spawn('npx', [
       'vitest',
       'run',
@@ -31,6 +33,11 @@ async function runTestChunk(files, chunkIndex) {
     });
 
     child.on('exit', (code) => {
+      const duration = Date.now() - startTime;
+      const minutes = Math.floor(duration / 60000);
+      const seconds = ((duration % 60000) / 1000).toFixed(1);
+      console.log(`  ⏱️  Chunk ${chunkIndex + 1} completed in ${minutes}m ${seconds}s`);
+      
       if (code === 0) {
         resolve();
       } else {
@@ -59,7 +66,8 @@ async function runTestsWithRetry(files, chunkIndex, retries = MAX_RETRIES) {
 }
 
 async function main() {
-  const testFiles = globSync('src/**/*.{test,spec}.{ts,tsx,js,jsx}', {
+  const pattern = process.argv[2] || 'src/**/*.{test,spec}.{ts,tsx,js,jsx}';
+  const testFiles = globSync(pattern, {
     cwd: path.join(__dirname, '..'),
     absolute: true
   });

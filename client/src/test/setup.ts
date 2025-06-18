@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 import { vi, beforeEach, afterEach } from 'vitest';
-import createLightweightTipTapMock from './mocks/tiptap-lite';
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -80,16 +79,34 @@ global.FileReader = vi.fn().mockImplementation(() => ({
 })) as any;
 
 // Replace heavy TipTap with lightweight mock
-vi.mock('@tiptap/react', () => createLightweightTipTapMock);
+vi.mock('@tiptap/react', async () => {
+  const { createLightweightTipTapMock } = await import('./mocks/tiptap-lite');
+  return createLightweightTipTapMock();
+});
 vi.mock('@tiptap/starter-kit', () => ({ 
-  default: vi.fn(),
-  StarterKit: vi.fn() 
+  default: {
+    configure: vi.fn().mockReturnValue({})
+  }
 }));
+// Mock all TipTap extensions
+vi.mock('@tiptap/extension-document', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-paragraph', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-heading', () => ({ 
+  default: {
+    configure: vi.fn().mockReturnValue({})
+  }
+}));
+vi.mock('@tiptap/extension-bold', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-italic', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-underline', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-bullet-list', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-ordered-list', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-list-item', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
+vi.mock('@tiptap/extension-history', () => ({ default: vi.fn().mockImplementation(() => ({})) }));
 vi.mock('@tiptap/extension-text-align', () => ({ 
-  default: vi.fn().mockImplementation(() => ({}))
-}));
-vi.mock('@tiptap/extension-underline', () => ({ 
-  default: vi.fn().mockImplementation(() => ({}))
+  default: {
+    configure: vi.fn().mockReturnValue({})
+  }
 }));
 
 // Performance optimizations
