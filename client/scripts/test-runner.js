@@ -28,6 +28,7 @@ async function runTestChunk(files, chunkIndex) {
       'run',
       '--config', configFile,
       '--reporter', 'default',
+      '--reporter', 'junit',
       '--no-coverage',
       ...files
     ], {

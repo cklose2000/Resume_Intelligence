@@ -70,7 +70,7 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        files: ./coverage/lcov.info
+        files: ./client/coverage/lcov.info
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
@@ -86,6 +86,11 @@ jobs:
       with:
         path: test-results-all
     
+    - name: List downloaded artifacts
+      run: |
+        echo "Downloaded artifacts:"
+        find test-results-all -type f -name "*.xml" -o -name "*.json" -o -name "*.html" | head -20
+    
     - name: Publish test report
       uses: dorny/test-reporter@v1
       if: always()
@@ -94,3 +99,15 @@ jobs:
         path: 'test-results-all/**/junit.xml'
         reporter: jest-junit
         fail-on-error: false
+      continue-on-error: true
+    
+    - name: Display performance reports
+      if: always()
+      run: |
+        echo "## Test Performance Summary"
+        for report in test-results-all/*/test-performance-report.md; do
+          if [ -f "$report" ]; then
+            echo "### $(basename $(dirname "$report"))"
+            cat "$report"
+          fi
+        done
