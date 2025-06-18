@@ -1,4 +1,4 @@
-import { apiRequest } from "./queryClient";
+import { openaiClient } from "./openaiClient";
 
 export interface JobRequirements {
   skills: string[];
@@ -10,7 +10,7 @@ export interface JobRequirements {
 
 export interface JobAnalysisResponse {
   jobAnalysis: {
-    id: number;
+    id: string;
     jobTitle: string;
     jobDescription: string;
     extractedRequirements: string[];
@@ -38,8 +38,8 @@ export interface OptimizationRecommendation {
 
 export interface ResumeAnalysisResponse {
   resumeAnalysis: {
-    id: number;
-    jobAnalysisId: number;
+    id: string;
+    jobAnalysisId: string;
     originalContent: string;
     fileName: string;
     fileType: string;
@@ -59,44 +59,116 @@ export interface DocumentTemplate {
 }
 
 export async function analyzeJob(jobDescription: string): Promise<JobAnalysisResponse> {
-  const response = await apiRequest("POST", "/api/analyze-job", {
-    jobDescription,
-  });
+  const { sessionState } = await import('./sessionState');
   
-  return response.json();
+  const analysisResult = await openaiClient.analyzeJobDescription(jobDescription);
+  
+  // Create a unique ID for the job analysis (since we're not using a database)
+  const jobAnalysisId = `job-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  const jobAnalysisResponse = {
+    jobAnalysis: {
+      id: jobAnalysisId,
+      jobTitle: analysisResult.jobTitle,
+      jobDescription,
+      extractedRequirements: [
+        ...analysisResult.requirements.skills,
+        ...analysisResult.requirements.experience,
+        ...analysisResult.requirements.qualifications,
+        ...analysisResult.requirements.responsibilities
+      ],
+      keywords: analysisResult.requirements.keywords,
+    },
+    requirements: analysisResult.requirements,
+    jobTitle: analysisResult.jobTitle,
+    company: analysisResult.company
+  };
+  
+  // Store in session state
+  sessionState.storeJobAnalysis(jobAnalysisResponse);
+  
+  return jobAnalysisResponse;
 }
 
-export async function analyzeResume(file: File, jobAnalysisId: number): Promise<ResumeAnalysisResponse> {
-  const formData = new FormData();
-  formData.append('resume', file);
-  formData.append('jobAnalysisId', jobAnalysisId.toString());
+export async function analyzeResume(file: File, jobAnalysisId: string, jobRequirements: JobRequirements): Promise<ResumeAnalysisResponse> {
+  const { sessionState } = await import('./sessionState');
   
-  const response = await fetch("/api/analyze-resume", {
-    method: "POST",
-    body: formData,
-    credentials: "include",
-  });
+  // Process file client-side
+  const { processFile } = await import('./fileProcessor');
+  const processedFile = await processFile(file);
   
-  if (!response.ok) {
-    const text = (await response.text()) || response.statusText;
-    throw new Error(`${response.status}: ${text}`);
+  // Analyze resume against job requirements using OpenAI
+  const { scores, recommendations } = await openaiClient.analyzeResumeAlignment(
+    processedFile.content,
+    jobRequirements
+  );
+  
+  // Create a unique ID for the resume analysis
+  const resumeAnalysisId = `resume-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  
+  const resumeAnalysisResponse = {
+    resumeAnalysis: {
+      id: resumeAnalysisId,
+      jobAnalysisId,
+      originalContent: processedFile.content,
+      fileName: processedFile.fileName,
+      fileType: processedFile.fileType,
+      overallScore: scores.overall,
+      keywordScore: scores.keywords,
+      atsScore: scores.ats,
+      recommendations,
+      optimizedContent: null,
+    },
+    scores,
+    recommendations 
+  };
+  
+  // Store in session state
+  sessionState.storeResumeAnalysis(resumeAnalysisResponse);
+  
+  return resumeAnalysisResponse;
+}
+
+export async function optimizeResume(resumeAnalysisId: string, appliedRecommendations: string[]) {
+  const { sessionState } = await import('./sessionState');
+  
+  const resumeAnalysis = sessionState.getResumeAnalysis(resumeAnalysisId);
+  if (!resumeAnalysis) {
+    throw new Error("Resume analysis not found");
   }
-  
-  return response.json();
-}
 
-export async function optimizeResume(resumeAnalysisId: number, appliedRecommendations: string[]) {
-  const response = await apiRequest("POST", "/api/optimize-resume", {
-    resumeAnalysisId,
-    appliedRecommendations,
+  // Generate optimized content using OpenAI
+  const optimizedContent = await openaiClient.generateOptimizedContent(
+    resumeAnalysis.resumeAnalysis.originalContent,
+    resumeAnalysis.recommendations,
+    appliedRecommendations
+  );
+
+  // Update the resume analysis with optimized content and applied recommendations
+  const updatedAnalysis = sessionState.updateResumeAnalysis(resumeAnalysisId, {
+    optimizedContent,
+    recommendations: resumeAnalysis.recommendations.map(rec => ({
+      ...rec,
+      applied: appliedRecommendations.includes(rec.id)
+    }))
   });
-  
-  return response.json();
+
+  return { 
+    optimizedContent,
+    updatedAnalysis 
+  };
 }
 
 export async function getTemplates(): Promise<{ templates: DocumentTemplate[] }> {
-  const response = await apiRequest("GET", "/api/templates");
-  return response.json();
+  // Client-side templates - no server required
+  const templates = [
+    { name: "Professional", description: "Clean, modern resume template" },
+    { name: "Modern", description: "Contemporary design with accent colors" },
+    { name: "Classic", description: "Traditional, professional layout" },
+    { name: "Minimal", description: "Simple, clean design" }
+  ];
+  
+  return { templates };
 }
 
 export async function generateDocument(
@@ -104,16 +176,17 @@ export async function generateDocument(
   templateName: string, 
   format: string
 ): Promise<{ content: string; filename: string; format: string }> {
-  const response = await apiRequest("POST", "/api/generate-document", {
-    content,
-    templateName,
-    format,
-  });
-  
-  return response as { content: string; filename: string; format: string };
+  const { generateClientDocument } = await import('./documentGenerator');
+  return generateClientDocument(content, templateName, format);
 }
 
-export async function getResumeAnalysis(id: number) {
-  const response = await apiRequest("GET", `/api/resume-analysis/${id}`);
-  return response.json();
+export async function getResumeAnalysis(id: string) {
+  const { sessionState } = await import('./sessionState');
+  const resumeAnalysis = sessionState.getResumeAnalysis(id);
+  
+  if (!resumeAnalysis) {
+    throw new Error("Resume analysis not found");
+  }
+  
+  return { resumeAnalysis };
 }

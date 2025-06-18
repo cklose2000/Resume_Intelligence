@@ -15,23 +15,32 @@ interface DocumentGenerationProps {
 }
 
 export function DocumentGeneration({ resumeAnalysis, beforeScore, afterScore }: DocumentGenerationProps) {
-  const [selectedTemplate, setSelectedTemplate] = useState('Modern Professional');
-  const [selectedFormat, setSelectedFormat] = useState('txt');
+  const [selectedTemplate, setSelectedTemplate] = useState('Professional');
+  const [selectedFormat, setSelectedFormat] = useState('docx');
   const { toast } = useToast();
 
   const { data: templatesData } = useQuery({
-    queryKey: ['/api/templates'],
+    queryKey: ['templates'],
+    queryFn: getTemplates,
     enabled: !!resumeAnalysis,
   });
 
   const generateDocumentMutation = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!resumeAnalysis) throw new Error('No resume analysis available');
-      return generateDocument(resumeAnalysis.resumeAnalysis.id, selectedTemplate, selectedFormat);
+      
+      // Use optimized content if available, otherwise use original content
+      const content = resumeAnalysis.resumeAnalysis.optimizedContent || resumeAnalysis.resumeAnalysis.originalContent;
+      
+      const result = await generateDocument(content, selectedTemplate, selectedFormat);
+      
+      // Import the download function and trigger download
+      const { downloadDocument } = await import('@/lib/documentGenerator');
+      downloadDocument(result.content, result.filename, result.format);
+      
+      return result;
     },
-    onSuccess: (data) => {
-      // Trigger download
-      window.location.href = data.downloadUrl;
+    onSuccess: () => {
       toast({
         title: "Document Generated",
         description: "Your optimized resume has been generated and downloaded.",

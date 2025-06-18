@@ -4,10 +4,12 @@ import { ResumeUpload } from '@/components/ResumeUpload';
 import { ResumeAnalysis } from '@/components/ResumeAnalysis';
 import { ContentPreview } from '@/components/ContentPreview';
 import { DocumentGeneration } from '@/components/DocumentGeneration';
+import { ApiKeyInput } from '@/components/ApiKeyInput';
 import { Card, CardContent } from '@/components/ui/card';
 import type { JobAnalysisResponse, ResumeAnalysisResponse } from '@/lib/api';
 
 export default function Dashboard() {
+  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
   const [jobAnalysis, setJobAnalysis] = useState<JobAnalysisResponse | null>(null);
   const [resumeAnalysis, setResumeAnalysis] = useState<ResumeAnalysisResponse | null>(null);
   const [optimizedContent, setOptimizedContent] = useState<string>('');
@@ -90,7 +92,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* API Key Input */}
+        <ApiKeyInput onApiKeySet={setHasApiKey} />
+
         {/* Optimization Workflow */}
+        {hasApiKey && (
+        <>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Step 1: Job Description Input */}
           <div className="lg:col-span-1">
@@ -101,6 +108,7 @@ export default function Dashboard() {
           <div className="lg:col-span-2">
             <ResumeUpload 
               jobAnalysisId={jobAnalysis?.jobAnalysis.id || null}
+              jobRequirements={jobAnalysis?.requirements || null}
               onAnalysisComplete={handleResumeAnalysisComplete}
             />
           </div>
@@ -126,8 +134,11 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+        </>
+        )}
 
         {/* Document Generation */}
+        {hasApiKey && (
         <div className="mt-8">
           <DocumentGeneration 
             resumeAnalysis={resumeAnalysis}
@@ -135,6 +146,7 @@ export default function Dashboard() {
             afterScore={afterScore}
           />
         </div>
+        )}
 
         {/* Feature Highlights */}
         <div className="mt-12 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">

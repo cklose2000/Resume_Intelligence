@@ -2,24 +2,25 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileUpload } from '@/components/ui/file-upload';
-import { analyzeResume, type ResumeAnalysisResponse } from '@/lib/api';
+import { analyzeResume, type ResumeAnalysisResponse, type JobRequirements } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface ResumeUploadProps {
-  jobAnalysisId: number | null;
+  jobAnalysisId: string | null;
+  jobRequirements: JobRequirements | null;
   onAnalysisComplete: (analysis: ResumeAnalysisResponse) => void;
 }
 
-export function ResumeUpload({ jobAnalysisId, onAnalysisComplete }: ResumeUploadProps) {
+export function ResumeUpload({ jobAnalysisId, jobRequirements, onAnalysisComplete }: ResumeUploadProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { toast } = useToast();
 
   const analyzeResumeMutation = useMutation({
     mutationFn: (file: File) => {
-      if (!jobAnalysisId) {
+      if (!jobAnalysisId || !jobRequirements) {
         throw new Error('Please analyze job requirements first');
       }
-      return analyzeResume(file, jobAnalysisId);
+      return analyzeResume(file, jobAnalysisId, jobRequirements);
     },
     onSuccess: (data) => {
       onAnalysisComplete(data);
@@ -37,9 +38,22 @@ export function ResumeUpload({ jobAnalysisId, onAnalysisComplete }: ResumeUpload
     },
   });
 
-  const handleFileSelect = (file: File) => {
+  const handleFileSelect = async (file: File) => {
+    // Validate file before processing
+    const { validateFile } = await import('@/lib/fileProcessor');
+    const validation = validateFile(file);
+    
+    if (!validation.valid) {
+      toast({
+        title: "Invalid File",
+        description: validation.error,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSelectedFile(file);
-    if (jobAnalysisId) {
+    if (jobAnalysisId && jobRequirements) {
       analyzeResumeMutation.mutate(file);
     } else {
       toast({
