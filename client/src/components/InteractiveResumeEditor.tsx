@@ -274,7 +274,7 @@ export function InteractiveResumeEditor({
 
   return (
     <div className={cn("interactive-resume-editor", className)}>
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .interactive-resume-editor {
           position: relative;
         }
@@ -389,7 +389,7 @@ export function InteractiveResumeEditor({
         .editing .edit-indicator {
           opacity: 1;
         }
-      `}</style>
+      ` }} />
       
       <div className={cn("relative", isEditing && "editing")}>
         <div className="editor-toolbar">
