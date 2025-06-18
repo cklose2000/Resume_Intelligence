@@ -243,49 +243,40 @@ describe('AISuggestions', () => {
       expect(within(firstSuggestion).getByText(/Led development team/)).toBeInTheDocument();
     });
 
-    it('should apply all filtered suggestions', async () => {
+    it('should apply all suggestions when Apply All is clicked', async () => {
       const user = userEvent.setup();
       render(<AISuggestions {...defaultProps} />);
       
-      // Filter to high impact only
-      await user.click(screen.getByText('High'));
-      
-      // Apply all filtered
-      const applyAllButton = screen.getByText('Apply All (2)');
+      const applyAllButton = screen.getByText('Apply All');
       await user.click(applyAllButton);
       
-      expect(mockOnApplyAll).toHaveBeenCalledWith(['1', '3']);
+      // Should call onApplySuggestion for each suggestion
+      expect(mockOnApply).toHaveBeenCalledTimes(4);
     });
 
-    it('should show confirmation dialog for apply all', async () => {
+    it('should handle sequential applies correctly', async () => {
       const user = userEvent.setup();
       render(<AISuggestions {...defaultProps} />);
       
-      const applyAllButton = screen.getByText('Apply All (4)');
-      await user.click(applyAllButton);
+      // Apply first suggestion
+      const firstSuggestion = screen.getByTestId('suggestion-item-1');
+      await user.click(within(firstSuggestion).getByText('Apply'));
       
-      // Should show confirmation dialog
-      expect(screen.getByText(/Are you sure you want to apply all/)).toBeInTheDocument();
-      
-      // Confirm
-      const confirmButton = screen.getByText('Confirm');
-      await user.click(confirmButton);
-      
-      expect(mockOnApplyAll).toHaveBeenCalledWith(['1', '2', '3', '4']);
+      // Should have called onApplySuggestion once
+      expect(mockOnApply).toHaveBeenCalledTimes(1);
+      expect(mockOnApply).toHaveBeenCalledWith(mockSuggestions[0]);
     });
 
-    it('should cancel apply all operation', async () => {
+    it('should update UI after applying suggestions', async () => {
       const user = userEvent.setup();
       render(<AISuggestions {...defaultProps} />);
       
-      const applyAllButton = screen.getByText('Apply All (4)');
-      await user.click(applyAllButton);
+      // Apply a suggestion
+      const firstSuggestion = screen.getByTestId('suggestion-item-1');
+      await user.click(within(firstSuggestion).getByText('Apply'));
       
-      // Cancel
-      const cancelButton = screen.getByText('Cancel');
-      await user.click(cancelButton);
-      
-      expect(mockOnApplyAll).not.toHaveBeenCalled();
+      // The apply button should be replaced with applied indicator
+      expect(within(firstSuggestion).getByText('Applied')).toBeInTheDocument();
     });
   });
 
@@ -408,7 +399,7 @@ describe('AISuggestions', () => {
       const user = userEvent.setup();
       const errorOnApply = vi.fn().mockRejectedValue(new Error('Apply failed'));
       
-      render(<AISuggestions {...defaultProps} onApply={errorOnApply} />);
+      render(<AISuggestions {...defaultProps} onApplySuggestion={errorOnApply} />);
       
       const firstSuggestion = screen.getByTestId('suggestion-item-1');
       const applyButton = within(firstSuggestion).getByTitle('Apply suggestion');

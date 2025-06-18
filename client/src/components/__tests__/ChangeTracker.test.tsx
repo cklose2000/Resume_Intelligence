@@ -6,9 +6,9 @@ import { ChangeTracker } from '../ChangeTracker';
 
 // Mock the diff library
 vi.mock('diff', () => ({
-  diffLines: vi.fn((oldStr, newStr) => {
+  diffLines: vi.fn((oldStr: string, newStr: string) => {
     // Simple mock implementation
-    const changes = [];
+    const changes: Array<{ removed?: boolean; added?: boolean; value: string }> = [];
     if (oldStr !== newStr) {
       changes.push({ removed: true, value: oldStr });
       changes.push({ added: true, value: newStr });
@@ -17,9 +17,9 @@ vi.mock('diff', () => ({
     }
     return changes;
   }),
-  diffWords: vi.fn((oldStr, newStr) => {
+  diffWords: vi.fn((oldStr: string, newStr: string) => {
     // Simple mock for word diff
-    const changes = [];
+    const changes: Array<{ removed?: boolean; added?: boolean; value: string }> = [];
     const oldWords = oldStr.split(' ');
     const newWords = newStr.split(' ');
     
