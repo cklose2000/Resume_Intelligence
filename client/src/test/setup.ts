@@ -54,6 +54,31 @@ window.getSelection = vi.fn().mockReturnValue({
 // Mock canvas for TipTap
 HTMLCanvasElement.prototype.getContext = vi.fn();
 
+// Mock FileReader for file processing tests
+global.FileReader = vi.fn().mockImplementation(() => ({
+  readAsText: vi.fn(function(this: any) {
+    setTimeout(() => {
+      this.onload?.({ target: { result: 'Mock file content' } });
+    }, 0);
+  }),
+  readAsArrayBuffer: vi.fn(function(this: any) {
+    setTimeout(() => {
+      const buffer = new ArrayBuffer(8);
+      this.onload?.({ target: { result: buffer } });
+    }, 0);
+  }),
+  readAsDataURL: vi.fn(function(this: any) {
+    setTimeout(() => {
+      this.onload?.({ target: { result: 'data:text/plain;base64,TW9jayBmaWxlIGNvbnRlbnQ=' } });
+    }, 0);
+  }),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  onload: null,
+  onerror: null,
+  result: null
+})) as any;
+
 // Replace heavy TipTap with lightweight mock
 vi.mock('@tiptap/react', () => createLightweightTipTapMock);
 vi.mock('@tiptap/starter-kit', () => ({ 

@@ -13,6 +13,14 @@ A client-side resume optimization tool that runs entirely in your browser. No se
 - **Real-time Processing**: Instant feedback and optimization recommendations
 - **Secure**: API keys stored in sessionStorage only, cleared when browser closes
 
+### 🎨 NEW: Enhanced Editor (Artifacts-like Interface)
+- **Rich Text Editing**: Professional WYSIWYG editor with full formatting support
+- **Split View Interface**: Edit and preview simultaneously with resizable panels
+- **AI Suggestions Panel**: Categorized improvement suggestions with impact indicators
+- **Change Tracking**: Visual diff tracking with inline and side-by-side views
+- **Auto-save**: Never lose your work with automatic draft saving
+- **Export Options**: Generate DOCX, PDF, and TXT files directly from the editor
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -107,6 +115,12 @@ npm run build
 - **Model**: The app uses OpenAI's o3 model
 - **API Key**: Required - get one from [OpenAI Platform](https://platform.openai.com/api-keys)
 - **Environment Variables**: None needed! The app runs entirely client-side
+
+## 📚 Documentation
+
+- [Enhanced Editor Guide](./ENHANCED_EDITOR_README.md) - Comprehensive guide to the new editor interface
+- [Test Suite Documentation](./TEST_SUITE_SUMMARY.md) - Details on the 272+ test implementation
+- [Development Roadmap](./TEST_SUITE_ROADMAP.md) - Future development plans
 
 ## 📝 Usage Tips
 
