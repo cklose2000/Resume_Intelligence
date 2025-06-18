@@ -16,7 +16,8 @@
     "test:quick": "vitest run --config client/vitest.config.ci.ts --testTimeout=10000 --bail=1",
     "test:perf": "node --experimental-modules client/scripts/analyze-test-performance.js",
     "test:flaky": "node --experimental-modules client/scripts/flaky-test-detector.js",
-    "test:wsl": "WSL_DISTRO_NAME=Ubuntu node --experimental-modules client/scripts/test-runner.js"
+    "test:wsl": "WSL_DISTRO_NAME=Ubuntu node --experimental-modules client/scripts/test-runner.js",
+    "test:wsl-stable": "cd client && NODE_OPTIONS='--max-old-space-size=4096' vitest run --config ./vitest.config.wsl.ts --reporter=verbose --bail=1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
