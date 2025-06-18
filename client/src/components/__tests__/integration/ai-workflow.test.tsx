@@ -70,7 +70,7 @@ describe('AI Workflow Integration', () => {
             id: '1',
             title: 'Add cloud experience',
             description: 'Include AWS experience',
-            impact: 'High',
+            impact: 'High' as const,
             category: 'Skills',
             applied: false,
           },
@@ -197,7 +197,6 @@ describe('AI Workflow Integration', () => {
           initialContent="<h1>Test</h1>"
           onContentChange={vi.fn()}
           onExport={vi.fn()}
-          onRequestApiKey={mockApiKeyPrompt}
         />
       );
 

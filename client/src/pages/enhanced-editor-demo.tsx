@@ -142,7 +142,7 @@ export default function EnhancedEditorDemo() {
 
         <ResumeWorkspace
           initialContent={content}
-          optimizedContent={optimizedContent}
+          optimizedContent={optimizedContent ?? undefined}
           aiSuggestions={suggestions}
           onContentChange={setContent}
           onExport={handleExport}

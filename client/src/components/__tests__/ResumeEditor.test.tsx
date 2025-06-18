@@ -232,15 +232,10 @@ describe('ResumeEditor', () => {
     it('should highlight AI suggestions', () => {
       const suggestions = [
         {
-          id: '1',
-          type: 'edit' as const,
-          section: 'experience' as const,
-          index: 0,
-          field: 'description',
-          original: 'Initial content',
-          suggested: 'Improved content',
+          start: 0,
+          end: 15,
+          suggestion: 'Improved content',
           reason: 'Better keywords',
-          impact: 'high' as const,
         },
       ];
       
@@ -259,15 +254,10 @@ describe('ResumeEditor', () => {
       const user = userEvent.setup();
       const suggestions = [
         {
-          id: '1',
-          type: 'edit' as const,
-          section: 'experience' as const,
-          index: 0,
-          field: 'description',
-          original: 'Initial content',
-          suggested: 'Improved content',
+          start: 0,
+          end: 15,
+          suggestion: 'Improved content',
           reason: 'Better keywords',
-          impact: 'high' as const,
         },
       ];
       

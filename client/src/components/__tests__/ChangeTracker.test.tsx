@@ -437,8 +437,8 @@ New Line 4`;
   describe('Error Handling', () => {
     it('should handle diff library errors gracefully', () => {
       // Mock diff to throw error
-      const diffModule = vi.mocked(await import('diff'));
-      diffModule.diffLines.mockImplementation(() => {
+      const diffModule = require('diff');
+      vi.spyOn(diffModule, 'diffLines').mockImplementation(() => {
         throw new Error('Diff failed');
       });
       

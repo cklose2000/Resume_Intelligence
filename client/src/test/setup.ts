@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { vi } from 'vitest';
+import { vi, beforeEach, afterEach } from 'vitest';
 import createLightweightTipTapMock from './mocks/tiptap-lite';
 
 // Mock window.matchMedia

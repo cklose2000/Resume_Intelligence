@@ -201,7 +201,7 @@ export class DocumentStructureParser {
   }
 
   private parseSummary(lines: string[], startIndex: number): string {
-    const summaryLines = [];
+    const summaryLines: string[] = [];
     
     for (let i = startIndex; i < lines.length; i++) {
       const line = lines[i];
@@ -433,7 +433,7 @@ export class DocumentStructureParser {
     // Contact section
     if (structure.contact.name) {
       html += `<h1>${structure.contact.name}</h1>\n`;
-      const contactDetails = [];
+      const contactDetails: string[] = [];
       if (structure.contact.email) contactDetails.push(structure.contact.email);
       if (structure.contact.phone) contactDetails.push(structure.contact.phone);
       if (structure.contact.location) contactDetails.push(structure.contact.location);
