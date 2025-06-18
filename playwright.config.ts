@@ -40,12 +40,48 @@ export default defineConfig({
 
     /* Timeout for navigation */
     navigationTimeout: 60000,
+
+    /* Visual comparison settings */
+    expect: {
+      // Global threshold for all visual comparisons
+      threshold: 0.2,
+      // Time to wait for screenshot comparison
+      timeout: 10000
+    }
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'chromium-visual',
+      testMatch: '**/visual-regression.spec.ts',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Optimized for visual testing
+        launchOptions: {
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-web-security',
+            '--font-render-hinting=none', // Consistent font rendering
+            '--disable-font-subpixel-positioning',
+            '--disable-lcd-text'
+          ]
+        },
+        // Stable viewport for visual tests
+        viewport: { width: 1280, height: 720 },
+        // Disable animations for consistent screenshots
+        reducedMotion: 'reduce'
+      },
+    },
+    {
       name: 'chromium',
+      testIgnore: '**/visual-regression.spec.ts',
       use: { 
         ...devices['Desktop Chrome'],
         // Better performance in WSL2
@@ -65,21 +101,25 @@ export default defineConfig({
 
     {
       name: 'firefox',
+      testIgnore: '**/visual-regression.spec.ts',
       use: { ...devices['Desktop Firefox'] },
     },
 
     {
       name: 'webkit',
+      testIgnore: '**/visual-regression.spec.ts',
       use: { ...devices['Desktop Safari'] },
     },
 
     /* Test against mobile viewports. */
     {
       name: 'Mobile Chrome',
+      testIgnore: '**/visual-regression.spec.ts',
       use: { ...devices['Pixel 5'] },
     },
     {
       name: 'Mobile Safari',
+      testIgnore: '**/visual-regression.spec.ts',
       use: { ...devices['iPhone 12'] },
     },
 
@@ -114,4 +154,16 @@ export default defineConfig({
   /* Global setup and teardown */
   globalSetup: require.resolve('./e2e/global-setup.ts'),
   globalTeardown: require.resolve('./e2e/global-teardown.ts'),
+
+  /* Expect options for visual comparisons */
+  expect: {
+    // Screenshot comparison settings
+    toHaveScreenshot: {
+      threshold: 0.2,
+      mode: 'non-zero-diff'
+    },
+    toMatchSnapshot: {
+      threshold: 0.1
+    }
+  }
 });
