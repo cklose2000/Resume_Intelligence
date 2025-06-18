@@ -250,7 +250,7 @@ export function ResumeWorkspace({
                       section: suggestion.section as any,
                       index: suggestion.index,
                       field: suggestion.field,
-                      original: suggestion.original,
+                      original: suggestion.original || '',
                       suggested: suggestion.suggested,
                       reason: suggestion.reason
                     }],
@@ -270,7 +270,7 @@ export function ResumeWorkspace({
         )}
       </div>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .resume-workspace {
           font-family: system-ui, -apple-system, sans-serif;
         }
@@ -293,7 +293,7 @@ export function ResumeWorkspace({
           height: 3px;
           cursor: row-resize;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

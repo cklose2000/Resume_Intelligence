@@ -276,7 +276,7 @@ export function ResumeEditor({
           fontFamily: 'system-ui, -apple-system, sans-serif',
         }}
       />
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .ProseMirror {
           min-height: 400px;
           outline: none;
@@ -346,7 +346,7 @@ export function ResumeEditor({
         .ai-suggestion:hover {
           background-color: #bbf7d0;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

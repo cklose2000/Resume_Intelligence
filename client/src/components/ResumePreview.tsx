@@ -120,7 +120,7 @@ export function ResumePreview({
         </div>
       </div>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           .resume-preview {
             background: white !important;
@@ -236,7 +236,7 @@ export function ResumePreview({
             font-size: 11px;
           }
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

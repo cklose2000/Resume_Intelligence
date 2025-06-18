@@ -255,7 +255,7 @@ export function AISuggestions({
         </div>
       </div>
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .ai-suggestions .suggestion-diff {
           display: inline-block;
           padding: 2px 4px;
@@ -274,7 +274,7 @@ export function AISuggestions({
           background-color: #dcfce7;
           color: #16a34a;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }

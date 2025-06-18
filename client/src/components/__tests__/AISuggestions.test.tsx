@@ -3,14 +3,12 @@ import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AISuggestions } from '../AISuggestions';
-import { StructuredSuggestion } from '@/lib/openaiClient';
 
 describe('AISuggestions', () => {
   const mockOnApply = vi.fn();
   const mockOnReject = vi.fn();
-  const mockOnApplyAll = vi.fn();
 
-  const mockSuggestions: StructuredSuggestion[] = [
+  const mockSuggestions = [
     {
       id: '1',
       type: 'edit',
@@ -60,15 +58,13 @@ describe('AISuggestions', () => {
 
   const defaultProps = {
     suggestions: mockSuggestions,
-    onApply: mockOnApply,
-    onReject: mockOnReject,
-    onApplyAll: mockOnApplyAll,
+    onApplySuggestion: mockOnApply,
+    onRejectSuggestion: mockOnReject,
   };
 
   beforeEach(() => {
     mockOnApply.mockClear();
     mockOnReject.mockClear();
-    mockOnApplyAll.mockClear();
   });
 
   describe('Rendering', () => {

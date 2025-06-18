@@ -274,7 +274,7 @@ export function ChangeTracker({
         </>
       )}
 
-      <style jsx global>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .change-tracker .diff-addition {
           background-color: #dcfce7;
           color: #15803d;
@@ -308,7 +308,7 @@ export function ChangeTracker({
           display: inline-block;
           text-align: right;
         }
-      `}</style>
+      ` }} />
     </div>
   );
 }
