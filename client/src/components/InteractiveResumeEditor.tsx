@@ -41,43 +41,50 @@ export function InteractiveResumeEditor({
       return;
     }
 
-    // Use diff library to compare original and optimized content
+    // Simple line-based comparison to preserve order
     const parseContentIntoSegments = () => {
-      // Get word-by-word diff for more granular highlighting
-      const diffParts = Diff.diffWords(originalContent, optimizedContent);
-      const newSegments: TextSegment[] = [];
-      let segmentId = 0;
+      // Split both contents into lines
+      const optimizedLines = optimizedContent.split('\n');
+      const originalLines = originalContent.split('\n');
       
-      diffParts.forEach((part) => {
-        if (part.removed) {
-          // Skip removed parts - we don't show them
-          return;
+      // Create a set of normalized original lines for faster lookup
+      const originalLinesNormalized = new Set(
+        originalLines.map(line => line.trim().toLowerCase())
+      );
+      
+      // Process optimized content line by line
+      const newSegments: TextSegment[] = optimizedLines.map((line, index) => {
+        const trimmedLine = line.trim();
+        const normalizedLine = trimmedLine.toLowerCase();
+        
+        // Check if this line is substantially new
+        // A line is considered new if:
+        // 1. It doesn't exist in the original (exact match after normalization)
+        // 2. It's not empty (empty lines are formatting, not content)
+        let isAiSuggestion = false;
+        
+        if (trimmedLine.length > 0) {
+          // Check for exact normalized match
+          const exactMatch = originalLinesNormalized.has(normalizedLine);
+          
+          // Check for partial matches (line might be modified, not entirely new)
+          const partialMatch = !exactMatch && originalLines.some(origLine => {
+            const origNormalized = origLine.trim().toLowerCase();
+            // Consider it a match if lines share significant content
+            return origNormalized.length > 10 && normalizedLine.length > 10 &&
+                   (origNormalized.includes(normalizedLine) || normalizedLine.includes(origNormalized));
+          });
+          
+          // Mark as AI suggestion if no exact match and no significant partial match
+          isAiSuggestion = !exactMatch && !partialMatch;
         }
         
-        const text = part.value;
-        const isAiSuggestion = part.added || false;
-        
-        // Split by newlines to maintain structure
-        const lines = text.split('\n');
-        
-        lines.forEach((line, lineIndex) => {
-          // Don't create segments for empty lines between splits
-          if (lineIndex > 0 && lineIndex < lines.length - 1 && !line.trim()) {
-            newSegments.push({
-              id: `seg-${segmentId++}`,
-              text: '\n',
-              isAiSuggestion: false,
-              isEdited: false
-            });
-          } else if (line) {
-            newSegments.push({
-              id: `seg-${segmentId++}`,
-              text: line + (lineIndex < lines.length - 1 ? '\n' : ''),
-              isAiSuggestion,
-              isEdited: false
-            });
-          }
-        });
+        return {
+          id: `line-${index}`,
+          text: line,
+          isAiSuggestion,
+          isEdited: false
+        };
       });
       
       setSegments(newSegments);
