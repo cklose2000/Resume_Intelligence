@@ -1,9 +1,12 @@
 import mammoth from 'mammoth';
+import { DocumentStructureParser, ResumeStructure } from './documentStructure';
 
 export interface ProcessedFile {
   content: string;
   fileName: string;
   fileType: string;
+  structure?: ResumeStructure;
+  htmlContent?: string;
 }
 
 export async function processFile(file: File): Promise<ProcessedFile> {
@@ -30,10 +33,17 @@ export async function processFile(file: File): Promise<ProcessedFile> {
     // Clean and normalize the content
     content = cleanTextContent(content);
 
+    // Parse document structure
+    const parser = new DocumentStructureParser(content);
+    const structure = parser.parse();
+    const htmlContent = parser.toHTML(structure);
+
     return {
       content,
       fileName,
-      fileType
+      fileType,
+      structure,
+      htmlContent
     };
   } catch (error) {
     console.error('Error processing file:', error);
@@ -59,10 +69,83 @@ async function processDocxFile(file: File): Promise<string> {
     reader.onload = async (e) => {
       try {
         const arrayBuffer = e.target?.result as ArrayBuffer;
-        const result = await mammoth.extractRawText({ arrayBuffer });
-        resolve(result.value);
+        
+        // Use mammoth with options to preserve more structure
+        const result = await mammoth.convertToHtml(
+          { arrayBuffer },
+          {
+            styleMap: [
+              "p[style-name='Heading 1'] => h1:fresh",
+              "p[style-name='Heading 2'] => h2:fresh",
+              "p[style-name='Heading 3'] => h3:fresh",
+              "p[style-name='Title'] => h1:fresh",
+              "p[style-name='Subtitle'] => h3:fresh",
+              "b => strong",
+              "i => em",
+              "u => u"
+            ]
+          }
+        );
+        
+        // Convert HTML to text while preserving structure
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = result.value;
+        
+        // Extract text with preserved structure
+        const extractStructuredText = (node: Node): string => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent || '';
+          }
+          
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const element = node as HTMLElement;
+            const tagName = element.tagName.toLowerCase();
+            let text = '';
+            
+            // Add appropriate formatting based on tag
+            switch (tagName) {
+              case 'h1':
+              case 'h2':
+              case 'h3':
+                text = '\n\n' + element.textContent?.toUpperCase() + '\n';
+                break;
+              case 'p':
+                text = element.textContent + '\n';
+                break;
+              case 'li':
+                text = '• ' + element.textContent + '\n';
+                break;
+              case 'br':
+                text = '\n';
+                break;
+              default:
+                // Process children
+                Array.from(element.childNodes).forEach(child => {
+                  text += extractStructuredText(child);
+                });
+                if (tagName === 'ul' || tagName === 'ol') {
+                  text += '\n';
+                }
+            }
+            
+            return text;
+          }
+          
+          return '';
+        };
+        
+        const structuredText = extractStructuredText(tempDiv);
+        resolve(structuredText);
+        
       } catch (error) {
-        reject(new Error('Failed to extract text from DOCX file'));
+        // Fallback to raw text extraction
+        try {
+          const arrayBuffer = e.target?.result as ArrayBuffer;
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          resolve(result.value);
+        } catch (fallbackError) {
+          reject(new Error('Failed to extract text from DOCX file'));
+        }
       }
     };
     reader.onerror = () => reject(new Error('Failed to read DOCX file'));
@@ -118,7 +201,8 @@ function cleanTextContent(content: string): string {
     throw new Error('Invalid content provided for cleaning');
   }
 
-  return content
+  // More conservative cleaning to preserve formatting
+  let cleaned = content
     // Remove non-printable characters except standard whitespace
     .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
     
@@ -128,17 +212,51 @@ function cleanTextContent(content: string): string {
     
     // Clean up spacing while preserving intentional structure
     .replace(/[ \t]+/g, ' ')                    // Multiple spaces/tabs to single space
-    .replace(/\n[ \t]+/g, '\n')                 // Remove indentation at line starts
     .replace(/[ \t]+\n/g, '\n')                 // Remove trailing whitespace
     
     // Preserve paragraph breaks but remove excessive empty lines
-    .replace(/\n\s*\n\s*\n+/g, '\n\n')          // Multiple empty lines to double newline
-    .replace(/^\s+|\s+$/g, '')                  // Trim start and end
+    .replace(/\n{4,}/g, '\n\n\n')               // Max 3 newlines
+    .trim();
+
+  // Split into lines for more intelligent processing
+  const lines = cleaned.split('\n');
+  const processedLines: string[] = [];
+  let previousWasEmpty = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const isEmpty = line.length === 0;
     
-    // Ensure content meets minimum quality standards
-    .split('\n')
-    .filter(line => line.trim().length > 0)     // Remove completely empty lines
-    .join('\n');
+    // Skip multiple consecutive empty lines
+    if (isEmpty && previousWasEmpty) {
+      continue;
+    }
+    
+    // Preserve section headers (all caps, short lines)
+    if (line.match(/^[A-Z\s&-]{3,30}$/) && line.length < 30) {
+      // Add spacing before headers (unless at start)
+      if (processedLines.length > 0 && !previousWasEmpty) {
+        processedLines.push('');
+      }
+      processedLines.push(line);
+    }
+    // Preserve bullet points
+    else if (line.match(/^[•\-*]\s/)) {
+      processedLines.push(line);
+    }
+    // Regular content
+    else if (!isEmpty) {
+      processedLines.push(line);
+    }
+    // Empty lines
+    else {
+      processedLines.push('');
+    }
+    
+    previousWasEmpty = isEmpty;
+  }
+
+  return processedLines.join('\n').trim();
 }
 
 export function validateFile(file: File): { valid: boolean; error?: string } {

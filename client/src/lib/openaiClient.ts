@@ -1,5 +1,7 @@
 // Client-side OpenAI implementation for privacy-first resume optimization
 
+import { EditOperation, StructuredEdit, ResumeStructure } from './documentStructure';
+
 export interface JobRequirements {
   skills: string[];
   experience: string[];
@@ -21,6 +23,20 @@ export interface OptimizationRecommendation {
   impact: 'High' | 'Medium' | 'Low';
   category: string;
   applied: boolean;
+}
+
+export interface StructuredSuggestion {
+  id: string;
+  type: 'edit' | 'addition' | 'removal';
+  section: keyof ResumeStructure | 'additionalSections';
+  index?: number;
+  field?: string;
+  original?: string;
+  suggested: string;
+  reason: string;
+  confidence?: number;
+  impact?: 'high' | 'medium' | 'low';
+  category?: string;
 }
 
 export interface JobAnalysisResult {
@@ -450,6 +466,96 @@ Return the complete optimized resume with proper formatting now.`
       .trim();
 
     return structured;
+  }
+
+  async generateStructuredSuggestions(
+    resumeStructure: ResumeStructure,
+    jobRequirements: JobRequirements
+  ): Promise<StructuredSuggestion[]> {
+    try {
+      const response = await this.makeOpenAIRequest([
+        {
+          role: "system",
+          content: `You are an expert resume optimization AI that provides structured, section-specific suggestions.
+
+Given a parsed resume structure and job requirements, analyze and provide specific edit suggestions.
+
+Return a JSON array of suggestion objects with these fields:
+- id: Unique identifier (e.g., "edit-exp-1", "add-skill-1")
+- type: "edit", "addition", or "removal"
+- section: One of "contact", "summary", "experience", "education", "skills", "additionalSections"
+- index: For array sections (experience, education, skills), the index of the item to edit
+- field: The specific field to edit (e.g., "description", "items", "position")
+- original: The current text (for edits only)
+- suggested: The suggested new text
+- reason: Clear explanation of why this change improves the resume
+- confidence: 0-1 score of how confident you are in this suggestion
+- impact: "high", "medium", or "low" based on importance
+- category: Category like "Keywords", "Quantification", "Action Verbs", etc.
+
+Focus on:
+1. Adding missing keywords from job requirements
+2. Quantifying achievements with metrics
+3. Using stronger action verbs
+4. Improving clarity and concision
+5. Highlighting relevant experience
+6. Ensuring ATS compatibility`
+        },
+        {
+          role: "user",
+          content: `Resume Structure:\n${JSON.stringify(resumeStructure, null, 2)}\n\nJob Requirements:\n${JSON.stringify(jobRequirements, null, 2)}\n\nProvide structured suggestions to optimize this resume. Return ONLY a JSON array.`
+        }
+      ]);
+
+      const suggestions = JSON.parse(response.choices[0].message.content || "[]");
+      
+      return suggestions.map((s: any, index: number) => ({
+        id: s.id || `suggestion-${index}`,
+        type: s.type || 'edit',
+        section: s.section || 'experience',
+        index: s.index,
+        field: s.field,
+        original: s.original || '',
+        suggested: s.suggested || '',
+        reason: s.reason || 'Improvement suggestion',
+        confidence: s.confidence || 0.7,
+        impact: s.impact || 'medium',
+        category: s.category || 'General'
+      }));
+    } catch (error) {
+      console.error("Error generating structured suggestions:", error);
+      throw new Error("Failed to generate structured suggestions");
+    }
+  }
+
+  async applyStructuredEdits(
+    resumeStructure: ResumeStructure,
+    editOperation: EditOperation
+  ): Promise<string> {
+    try {
+      const response = await this.makeOpenAIRequest([
+        {
+          role: "system",
+          content: `You are an expert resume formatter. Apply the provided structured edits to the resume and return properly formatted HTML.
+
+Requirements:
+1. Apply all edits, additions, and removals as specified
+2. Maintain professional formatting
+3. Use proper HTML tags: <h1> for name, <h2> for sections, <h3> for positions/degrees, <p> for text, <ul>/<li> for bullets
+4. Ensure consistent spacing and structure
+5. Keep the content truthful and authentic`
+        },
+        {
+          role: "user",
+          content: `Current Resume Structure:\n${JSON.stringify(resumeStructure, null, 2)}\n\nEdit Operation:\n${JSON.stringify(editOperation, null, 2)}\n\nApply these edits and return the complete resume as formatted HTML.`
+        }
+      ]);
+
+      return response.choices[0].message.content || '';
+    } catch (error) {
+      console.error("Error applying structured edits:", error);
+      throw new Error("Failed to apply structured edits");
+    }
   }
 }
 
