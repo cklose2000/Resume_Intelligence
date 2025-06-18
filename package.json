@@ -24,6 +24,8 @@
     "test:visual": "playwright test --project=chromium-visual",
     "test:visual-update": "playwright test --project=chromium-visual --update-snapshots",
     "test:visual-ui": "playwright test --project=chromium-visual --ui",
+    "test:performance": "playwright test e2e/performance-regression.spec.ts --project=chromium",
+    "test:performance-report": "playwright test e2e/performance-regression.spec.ts --project=chromium --reporter=json",
     "playwright:install": "playwright install"
   },
   "dependencies": {
