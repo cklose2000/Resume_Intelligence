@@ -368,7 +368,15 @@ Return the complete optimized resume with proper formatting now.`
       
       // Fix common spacing issues
       .replace(/\s+/g, ' ')                     // Multiple spaces to single space
-      .replace(/\s*-\s*/g, ' - ')               // Normalize dash spacing
+      
+      // Smart dash handling - don't add spaces around hyphens in words
+      .replace(/([a-zA-Z])\s*-\s*([a-zA-Z])/g, '$1-$2')  // Fix hyphenated words
+      .replace(/(\d)\s*-\s*(\d)/g, '$1-$2')              // Fix number ranges
+      
+      // Fix email addresses and URLs
+      .replace(/([a-zA-Z0-9._%+-]+)\s*@\s*([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, '$1@$2')
+      .replace(/([a-zA-Z0-9]+)\s*\.\s*([a-zA-Z]{2,})/g, '$1.$2')
+      
       .replace(/\s*&\s*/g, ' & ')               // Normalize ampersand spacing
       .replace(/\s*\.\s*$/g, '.')               // Clean sentence ending
       
@@ -382,10 +390,10 @@ Return the complete optimized resume with proper formatting now.`
       .replace(/(PROFESSIONAL EXPERIENCE|WORK EXPERIENCE|EXPERIENCE|EDUCATION|SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS|CERTIFICATIONS|PROJECTS|ACHIEVEMENTS|SUMMARY|OBJECTIVE|QUALIFICATIONS)(\s|\.)/gi, '\n\n$1\n\n')
       
       // Format job titles and company information
-      .replace(/([A-Z][a-zA-Z\s&-]+ - [A-Za-z\s&,.-]+)\s*(\d{4}[\s-]*\d{4}|\d{4}\s*-\s*Present)/gi, '\n\n$1\n$2\n\n')
+      .replace(/([A-Z][a-zA-Z\s&-]+ - [A-Za-z\s&,.-]+)\s*(\d{4}-\d{4}|\d{4}\s*-\s*Present)/gi, '\n\n$1\n$2\n\n')
       
       // Format standalone date ranges
-      .replace(/(\d{4}[\s-]*\d{4}|\d{4}\s*-\s*Present)(?!\s*\n)/gi, '\n$1\n')
+      .replace(/(\d{4}-\d{4}|\d{4}\s*-\s*Present)(?!\s*\n)/gi, '\n$1\n')
       
       // Clean up excessive line breaks
       .replace(/\n{3,}/g, '\n\n')
