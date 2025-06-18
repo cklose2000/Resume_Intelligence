@@ -2,23 +2,23 @@ import { defineConfig } from 'vitest/config';
 import path from 'path';
 
 export default defineConfig({
+  root: path.resolve(__dirname, '.'),
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    include: ['src/**/__tests__/**/*.{test,spec}.{js,jsx,ts,tsx}', 'src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
     exclude: ['node_modules', 'dist', '.next'],
     testTimeout: 30000,
     hookTimeout: 30000,
     teardownTimeout: 10000,
-    pool: 'threads',
+    pool: 'forks',
     poolOptions: {
-      threads: {
-        singleThread: false,
+      forks: {
+        singleFork: false,
         isolate: true,
-        useAtomics: true,
-        minThreads: 1,
-        maxThreads: 4
+        minForks: 1,
+        maxForks: 2
       }
     },
     reporters: ['default', 'junit'],
@@ -37,10 +37,7 @@ export default defineConfig({
         '**/*.mock.*'
       ]
     },
-    cache: {
-      dir: '../.vitest-cache'
-    },
-    maxConcurrency: 4,
+    maxConcurrency: 2,
     bail: 1,
     logHeapUsage: true,
     passWithNoTests: false
@@ -53,5 +50,6 @@ export default defineConfig({
   esbuild: {
     target: 'node18',
     platform: 'node'
-  }
+  },
+  cacheDir: path.resolve(__dirname, '../node_modules/.vite')
 });

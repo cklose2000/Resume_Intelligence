@@ -1,0 +1,83 @@
+name: Flaky Test Detection
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_pattern:
+        description: 'Test file pattern to check'
+        required: false
+        default: 'client/src/**/__tests__/**/*.test.tsx'
+
+jobs:
+  detect-flaky-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Detect flaky tests
+      run: |
+        # Get list of test files
+        TEST_PATTERN="${{ github.event.inputs.test_pattern || 'client/src/**/__tests__/**/*.test.tsx' }}"
+        TEST_FILES=$(find . -path "./node_modules" -prune -o -path "$TEST_PATTERN" -type f -print | head -20)
+        
+        # Run flaky test detection
+        npm run test:flaky -- $TEST_FILES
+      env:
+        NODE_OPTIONS: --max-old-space-size=4096
+    
+    - name: Upload flaky test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: flaky-test-report
+        path: client/flaky-test-report.json
+    
+    - name: Create issue for flaky tests
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const report = JSON.parse(fs.readFileSync('client/flaky-test-report.json', 'utf8'));
+          
+          if (report.summary.flakyTests > 0) {
+            const issueBody = `## Flaky Tests Detected
+            
+            The automated flaky test detection found ${report.summary.flakyTests} flaky test(s).
+            
+            ### Summary
+            - Total Tests Analyzed: ${report.summary.totalTests}
+            - Flaky Tests: ${report.summary.flakyTests}
+            - Stable Tests: ${report.summary.stableTests}
+            - Consistently Failing: ${report.summary.failingTests}
+            
+            ### Flaky Tests
+            ${report.flakyTests.map(test => `- \`${test.file}\` (${test.passRate} pass rate)`).join('\n')}
+            
+            Please investigate and fix these flaky tests to improve CI reliability.
+            
+            _This issue was automatically created by the flaky test detection workflow._
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Flaky Tests Detected - ${new Date().toISOString().split('T')[0]}`,
+              body: issueBody,
+              labels: ['bug', 'testing', 'flaky-test']
+            });
+          }

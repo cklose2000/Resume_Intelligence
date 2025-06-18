@@ -7,27 +7,35 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const CHUNK_SIZE = process.env.TEST_CHUNK_SIZE ? parseInt(process.env.TEST_CHUNK_SIZE) : 3;
+const CHUNK_SIZE = process.env.TEST_CHUNK_SIZE ? parseInt(process.env.TEST_CHUNK_SIZE) : 2;
 const MAX_RETRIES = process.env.TEST_MAX_RETRIES ? parseInt(process.env.TEST_MAX_RETRIES) : 2;
+const WSL_MODE = process.env.WSL_DISTRO_NAME !== undefined;
 
 async function runTestChunk(files, chunkIndex) {
   return new Promise((resolve, reject) => {
+    // Memory cleanup for WSL2
+    if (WSL_MODE && global.gc) {
+      global.gc();
+    }
+    
     console.log(`\n🧪 Running test chunk ${chunkIndex + 1} with ${files.length} files...`);
     files.forEach(f => console.log(`  - ${path.basename(f)}`));
     
     const startTime = Date.now();
+    const configFile = WSL_MODE ? 'vitest.config.wsl.ts' : 'vitest.config.ci.ts';
     const child = spawn('npx', [
       'vitest',
       'run',
-      '--config', 'vitest.config.ci.ts',
+      '--config', configFile,
       '--reporter', 'default',
       '--no-coverage',
       ...files
     ], {
       stdio: 'inherit',
+      cwd: path.join(__dirname, '..'),
       env: {
         ...process.env,
-        NODE_OPTIONS: '--max-old-space-size=4096',
+        NODE_OPTIONS: WSL_MODE ? '--max-old-space-size=2048 --expose-gc' : '--max-old-space-size=4096',
         VITEST_POOL_ID: String(chunkIndex)
       }
     });
@@ -60,15 +68,17 @@ async function runTestsWithRetry(files, chunkIndex, retries = MAX_RETRIES) {
         console.error(`\n❌ Chunk ${chunkIndex + 1} failed after ${retries + 1} attempts`);
         throw error;
       }
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Longer delay in WSL2 mode
+      await new Promise(resolve => setTimeout(resolve, WSL_MODE ? 5000 : 2000));
     }
   }
 }
 
 async function main() {
-  const pattern = process.argv[2] || 'src/**/*.{test,spec}.{ts,tsx,js,jsx}';
+  const pattern = process.argv[2] || 'src/**/__tests__/**/*.{test,spec}.{ts,tsx,js,jsx}';
+  const clientDir = path.join(__dirname, '..');
   const testFiles = globSync(pattern, {
-    cwd: path.join(__dirname, '..'),
+    cwd: clientDir,
     absolute: true
   });
 
@@ -81,6 +91,9 @@ async function main() {
   }
 
   console.log(`Split into ${chunks.length} chunks of up to ${CHUNK_SIZE} files each`);
+  if (WSL_MODE) {
+    console.log('🐧 Running in WSL mode with optimized settings');
+  }
 
   // Run chunks sequentially to avoid overwhelming the system
   const failedChunks = [];
@@ -107,6 +120,7 @@ async function main() {
       '--coverage'
     ], {
       stdio: 'inherit',
+      cwd: path.join(__dirname, '..'),
       env: {
         ...process.env,
         NODE_OPTIONS: '--max-old-space-size=4096'
