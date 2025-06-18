@@ -21,6 +21,9 @@
     "test:e2e": "playwright test",
     "test:e2e-headed": "playwright test --headed",
     "test:e2e-debug": "playwright test --debug",
+    "test:visual": "playwright test --project=chromium-visual",
+    "test:visual-update": "playwright test --project=chromium-visual --update-snapshots",
+    "test:visual-ui": "playwright test --project=chromium-visual --ui",
     "playwright:install": "playwright install"
   },
   "dependencies": {
