@@ -10,7 +10,10 @@
     "check": "tsc",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "node --experimental-modules client/scripts/test-runner.js",
+    "test:chunk": "vitest run --config client/vitest.config.ci.ts --reporter=default",
+    "test:quick": "vitest run --config client/vitest.config.ci.ts --testTimeout=10000 --bail=1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

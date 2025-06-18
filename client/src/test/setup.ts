@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import createLightweightTipTapMock from './mocks/tiptap-lite';
 
 // Mock window.matchMedia
 Object.defineProperty(window, 'matchMedia', {
@@ -52,3 +53,27 @@ window.getSelection = vi.fn().mockReturnValue({
 
 // Mock canvas for TipTap
 HTMLCanvasElement.prototype.getContext = vi.fn();
+
+// Replace heavy TipTap with lightweight mock
+vi.mock('@tiptap/react', () => createLightweightTipTapMock);
+vi.mock('@tiptap/starter-kit', () => ({ 
+  default: vi.fn(),
+  StarterKit: vi.fn() 
+}));
+vi.mock('@tiptap/extension-text-align', () => ({ 
+  default: vi.fn().mockImplementation(() => ({}))
+}));
+vi.mock('@tiptap/extension-underline', () => ({ 
+  default: vi.fn().mockImplementation(() => ({}))
+}));
+
+// Performance optimizations
+beforeEach(() => {
+  // Clear any accumulated state
+  vi.clearAllTimers();
+});
+
+afterEach(() => {
+  // Cleanup to prevent memory leaks
+  document.body.innerHTML = '';
+});
