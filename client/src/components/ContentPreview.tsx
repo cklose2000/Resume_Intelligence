@@ -8,6 +8,7 @@ import { useMutation } from '@tanstack/react-query';
 import { generateDocument, getTemplates, type DocumentTemplate } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import * as Diff from 'diff';
+import { InteractiveResumeEditor } from './InteractiveResumeEditor';
 
 interface ContentPreviewProps {
   originalContent: string;
@@ -24,6 +25,7 @@ export function ContentPreview({
 }: ContentPreviewProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [useInteractiveEditor, setUseInteractiveEditor] = useState(true);
   const [selectedTemplate, setSelectedTemplate] = useState('Modern Professional');
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const { toast } = useToast();
@@ -266,15 +268,30 @@ export function ContentPreview({
               </Badge>
             )}
             
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsEditing(!isEditing)}
-              className="h-8 px-2"
-            >
-              {isEditing ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
-              {isEditing ? 'Preview' : 'Edit'}
-            </Button>
+            {hasOptimizations && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setUseInteractiveEditor(!useInteractiveEditor)}
+                className="h-8 px-2"
+                title={useInteractiveEditor ? "Switch to basic editor" : "Switch to interactive editor"}
+              >
+                {useInteractiveEditor ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                {useInteractiveEditor ? 'Basic' : 'Interactive'}
+              </Button>
+            )}
+            
+            {!hasOptimizations && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditing(!isEditing)}
+                className="h-8 px-2"
+              >
+                {isEditing ? <Eye className="h-4 w-4" /> : <Edit3 className="h-4 w-4" />}
+                {isEditing ? 'Preview' : 'Edit'}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -306,7 +323,14 @@ export function ContentPreview({
       <CardContent className="space-y-4">
         {/* Content Editor/Viewer */}
         <div className="space-y-3">
-          {isEditing ? (
+          {useInteractiveEditor && hasOptimizations ? (
+            <InteractiveResumeEditor
+              originalContent={originalContent}
+              optimizedContent={optimizedContent}
+              onContentChange={setEditedContent}
+              className="bg-gray-50 rounded-lg border"
+            />
+          ) : isEditing ? (
             <div className="space-y-3">
               <Textarea
                 value={editedContent}

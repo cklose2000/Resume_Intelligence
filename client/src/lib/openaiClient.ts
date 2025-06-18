@@ -296,6 +296,11 @@ Return the complete optimized resume with proper formatting now.`
       .replace(/`([^`]+)`/g, '$1')              // Inline code
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')  // Links (preserve text)
       
+      // Clean orphaned parentheses and fix spacing
+      .replace(/\(\s*\)/g, '')                  // Remove empty parentheses
+      .replace(/\s+\(/g, ' (')                  // Fix spacing before parentheses
+      .replace(/\)\s+/g, ') ')                  // Fix spacing after parentheses
+      
       // Clean table artifacts carefully
       .replace(/^\s*\|.*\|\s*$/gm, '')          // Table rows
       .replace(/^\s*[-|:\s]+\s*$/gm, '')        // Table separators
@@ -315,7 +320,9 @@ Return the complete optimized resume with proper formatting now.`
     const cleanedSentences = sentences.map(sentence => this.cleanSentence(sentence));
     
     // Phase 3: Restructure into proper resume format
-    const structuredContent = this.restructureResumeContent(cleanedSentences.join(' '));
+    // Join sentences with newlines to preserve structure
+    const sentencesWithBreaks = cleanedSentences.join('\n');
+    const structuredContent = this.restructureResumeContent(sentencesWithBreaks);
     
     return structuredContent;
   }
@@ -327,10 +334,21 @@ Return the complete optimized resume with proper formatting now.`
     
     for (const line of lines) {
       const trimmed = line.trim();
-      if (!trimmed) continue;
+      
+      // Preserve empty lines as paragraph breaks
+      if (!trimmed) {
+        sentences.push('');
+        continue;
+      }
       
       // Check if this is a section header or date line
       if (this.isHeaderOrDate(trimmed)) {
+        sentences.push(trimmed);
+        continue;
+      }
+      
+      // For bullet points or list items, keep them as single units
+      if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
         sentences.push(trimmed);
         continue;
       }
